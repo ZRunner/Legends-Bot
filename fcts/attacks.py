@@ -228,10 +228,11 @@ class AttacksCog(commands.Cog):
     
     async def u_5(self,perso):
         "Fus Roh Dah"
-        targets = await self.select_random_players(2,perso.Team2)
+        targets = await self.select_random_players(3,perso.Team2)
         names = list()
         for t in targets:
             await self.apply_dmg(t,26,perso)
+            t.attack_boost -= 1
             names.append(t.name)
         return "{p} crie **Fus Roh Dah** à {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige de lourds dégâts !".format(p=perso.name,t=names)
 
