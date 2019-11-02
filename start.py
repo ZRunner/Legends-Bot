@@ -170,8 +170,8 @@ def main():
         await asyncio.sleep(3)
         await client.change_presence(activity=discord.Game(name="baaatttle!"))
 
-
-    token = 'NDkzMTk1OTgxNDUwMzc5Mjky.Dohdvw.si0Fil9F8eTjvd4-78XUP2NoH00'
+    with open('secrets.txt','r') as f:
+        token = f.read().strip()
 
     async def check_once(ctx):
         try:
