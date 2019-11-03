@@ -442,9 +442,9 @@ class AttacksCog(commands.Cog):
         points = await self.apply_dmg(target[0],24,perso)
         if random.random()<0.1:
             self.add_effects(target,'_on_bleeding',2)
-            txt = "{} utilise sa scie sur {} et lui fait {} PV de dégâts, en plus de lui causer une hémorragie ! ".format(perso.name,target[0].name,points)
+            txt = "{} attaque avec sa scie {} et lui fait {} PV de dégâts, en plus de lui causer un saignement !".format(perso.name,target[0].name,points)
         else:
-            txt = "{} utilise sa scie sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
+            txt = "{} utilise son couteau sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>10:
             txt += random.choice(self.critical)
         elif points<10:
@@ -460,7 +460,7 @@ class AttacksCog(commands.Cog):
         for i in targets2:
             i.attack_bonus += 1
         perso.attack_bonus += 1
-        txt = "{p} éclate de rire, ce qui a pour effet d'augmenter les attaques de lui et de ses alliés {a[0]} et {a[1]}, ainsi que de diminuer celles de {t[0]}, {t[1]} et {t[2]} ! ".format(p=perso.name,a=[x.name for x in targets1],t=[x.name for x in targets2])
+        txt = "{p} éclate d'un rire dément, ce qui a pour effet d'augmenter les attaques de lui et ses alliés {a[0]} et {a[1]}, ainsi que de diminuer celles de {t[0]}, {t[1]} et {t[2]} ! ".format(p=perso.name,a=[x.name for x in targets1],t=[x.name for x in targets2])
         return txt
     
     async def u_25(self,perso):
@@ -468,7 +468,7 @@ class AttacksCog(commands.Cog):
         for target in await self.select_random_players(50,perso.Team2):
             await self.apply_dmg(target,26,perso)
             await self.add_effects(target,'_on_poison',2)
-        txt = "{p} lance une bombe sur ses ennemis, leurs faisant de lourds dégâts et les empoisonnant pour 2 tours".format(p=perso.name)
+        txt = "{p} se met à joyeusement danser. Chaque mouvement cause une explosion chez ses ennemis, leur faisant de lourds dégâts et les empoisonnant pour 2 tours".format(p=perso.name)
         return txt
 
     async def a_32(self,perso):
@@ -477,7 +477,7 @@ class AttacksCog(commands.Cog):
         if len(target)==0:
             return "{} n'a plus aucun adversaire à combattre !".format(perso.name)
         points = await self.apply_dmg(target[0],14,perso)
-        txt = "{} attaque {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
+        txt = "{} avale des objets et les recrache sous forme d'étoile contre {}, lui faisant {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>14:
             txt += random.choice(self.critical)
         elif points<14:
