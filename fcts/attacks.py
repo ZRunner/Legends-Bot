@@ -142,7 +142,7 @@ class AttacksCog(commands.Cog):
         "Coup laser"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],14,perso)
-        txt = "{} utilise son sabre laser contre {}, et fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
+        txt = "{} donne des coups puissants avec son sabre laser contre {}, et fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
         if points>14:
             txt += random.choice(self.critical)
         elif points<14:
@@ -159,7 +159,7 @@ class AttacksCog(commands.Cog):
                 continue
             target.shield += 1
             names.append(target.name)
-        return "{p} protège {t[1]} et {t[2]}, en leur ajoutant 2 points de bouclier".format(p=names[0],t=names)
+        return "{p} lève la main et protège, grâce à une étrange énergie, {t[1]} et {t[2]}, en leur ajoutant 2 points de bouclier".format(p=names[0],t=names)
     
     async def u_1(self,perso):
         "Tir de la mort"
@@ -169,14 +169,14 @@ class AttacksCog(commands.Cog):
             await self.apply_dmg(t,22,perso,False)
             await self.add_effects(t,'_on_fire',2)
             names.append(t.name)
-        txt =  "{p} envoie son rayon de la mort sur {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige 22 PV de dégâts, et les enflamme !".format(p=perso.name,t=names)
+        txt =  "Le ciel s'obscurcit avec l'apparition d'une planète. {p} lui fait envoyer un rayon destructeur sur {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige 22 PV de dégâts, et les enflamme !".format(p=perso.name,t=names)
         return txt
 
     async def a_3(self,perso):
         "Pour les voleurs"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],20,perso)
-        txt = "{} attaque {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
+        txt = "{} se jette sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>20:
             txt += random.choice(self.critical)
         elif points<20:
@@ -189,7 +189,7 @@ class AttacksCog(commands.Cog):
         points = await self.apply_dmg(targets[0],22,perso)
         targets[1].frozen += 1
         await self.add_effects(targets[2],'_on_poison',1)
-        txt = "{p} invoque une araignée géante, qui fait {d}PV de dégâts sur {t[0]}, immobilise {t[1]} et empoisonne {t[2]} ! ".format(p=perso.name,t=[x.name for x in targets],d=points)
+        txt = "{p} appelle une araignée géante, qui fait {d}PV de dégâts sur {t[0]}, immobilise {t[1]} et empoisonne {t[2]} ! ".format(p=perso.name,t=[x.name for x in targets],d=points)
         return txt
 
     async def u_3(self,perso):
@@ -197,7 +197,7 @@ class AttacksCog(commands.Cog):
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],32,perso)
         perso.invisible += 1
-        txt = "{} devient invisible et parvient à faire {} PV de dégâts à {} ! ".format(perso.name,points,target[0].name)
+        txt = "La main de {} scintille un instant. Il devient invisible et parvient à faire {} PV de dégâts à {} ! ".format(perso.name,points,target[0].name)
         if points>32:
             txt += random.choice(self.critical)
         elif points<32:
@@ -270,7 +270,7 @@ class AttacksCog(commands.Cog):
         "Se vider les poches"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],10,perso)
-        txt = "{} vide ses poches face à {}, en lui faisant au passage {} PV de dégâts. ".format(perso.name,target[0].name,points)
+        txt = "{} vide ses poches sur {}, en lui faisant au passage {} PV de dégâts. ".format(perso.name,target[0].name,points)
         if points>10:
             txt += random.choice(self.critical)
         elif points<10:
@@ -284,13 +284,13 @@ class AttacksCog(commands.Cog):
         for t in targets:
             await self.apply_dmg(t,18,perso)
             names.append(t.name)
-        return "{p} utilise ses stocks de bières contre {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige 18 PV de dégâts !".format(p=perso.name,t=names)
+        return "{p} déverse ses stocks de bières contre {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige 18 PV de dégâts !".format(p=perso.name,t=names)
     
     async def u_10(self,perso):
         "Donut atomique"
         await self.bot.cogs['EffectsCog'].regen(perso.Team1.players)
         await self.bot.cogs['EffectsCog'].blessing(perso.Team1.players)
-        return "{} utilise son donut atomique et régénère tous ses alliés ! :doughnut: ".format(perso.name)
+        return "{} utilise un donut brillant en vert et, étonnamment, régénère tous ses alliés ! :doughnut: ".format(perso.name)
 
     async def a_13(self,perso):
         "Boule de froid"
@@ -311,7 +311,7 @@ class AttacksCog(commands.Cog):
             await self.apply_dmg(t,20,perso)
             t.attack_bonus -= 1
             names.append(t.name)
-        return "{p} refroidit {t[0]}, {t[1]} et {t[2]}, en faisant de gros dégâts à chacun et réduisant leurs attaques ! (-20pv)".format(p=perso.name,t=names)
+        return "{p} refroidit {t[0]}, {t[1]} et {t[2]}, en faisant des dégâts à chacun et réduisant leurs attaques ! (-20pv)".format(p=perso.name,t=names)
     
     async def u_13(self,perso):
         "Tempête hivernale"
@@ -336,14 +336,14 @@ class AttacksCog(commands.Cog):
         for t in targets:
             await self.apply_dmg(t,20,perso)
         perso.provocation_coef += 1
-        return "{p} utilise son aboiement pour effayer l'équipe adverse, ce qui fait besser les attaques de  {t[0]}, {t[1]} et {t[2]} !".format(p=perso.name,t=[x.name for x in targets])
+        return "{p} utilise son aboiement pour effayer l'équipe adverse, ce qui fait baisser les attaques de  {t[0]}, {t[1]} et {t[2]} !".format(p=perso.name,t=[x.name for x in targets])
     
     async def u_16(self,perso):
         "Flammes de l'enfer"
         for target in await self.select_random_players(50,perso.Team2):
             await self.add_effects(target,'_on_fire',3)
             await self.apply_dmg(target,12,perso,False)
-        return "{p} enflamme l'équipe adverse, réduisant leurs PV de 12 points !".format(p=perso.name)
+        return "{p} fait fissurer la terre, et des jets de lave enflamment l'équipe adverse, réduisant aussi leurs PV de 12 points !".format(p=perso.name)
 
     async def a_17(self,perso):
         "Grand coup"
@@ -366,7 +366,7 @@ class AttacksCog(commands.Cog):
         "Regard mortel"
         target =await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],36,perso)
-        txt = "{} porte un coup à {}, et fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
+        txt = "{} fixe {}, et brusquement lui fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
         if points>36:
             txt += random.choice(self.critical)
         elif points<36:
@@ -389,14 +389,14 @@ class AttacksCog(commands.Cog):
         perso.attack_bonus += 1
         perso.esquive += 20
         perso.thorny = True
-        return "{p} reçoit une augmentation soudaine de ses statistiques, lui apportant un bonus d'attaque et d'esquive".format(p=perso.name)
+        return "{p} perd contrôle et reçoit une augmentation soudaine de ses statistiques, lui apportant un bonus d'attaque et d'esquive".format(p=perso.name)
     
     async def u_22(self,perso):
         "Esprit déterminé"
         for i in await self.select_random_players(50,perso.Team1,avoid_player=perso):
             i.shield += 1
             i.esquive += 30
-        return "{}, déterminé comme jamais, renforce le bouclier de tous ses alliés".format(perso.name)
+        return "{}, déterminé comme jamais, soigne et renforce le bouclier de tous ses alliés".format(perso.name)
 
     async def a_24(self,perso):
         "Epée de l'ordre"
@@ -429,7 +429,7 @@ class AttacksCog(commands.Cog):
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],34,perso)
         perso.invisible += 1
-        txt = "{} utilise ses pouvoirs magiques et fait {} PV de dégâts à {} ".format(perso.name,points,target[0].name)
+        txt = "{} disparaît dans la fumée, et utilise sa lame cachée pour faire {} de dégâts à {} ".format(perso.name,points,target[0].name)
         if points>34:
             txt += random.choice(self.critical)
         elif points<34:
