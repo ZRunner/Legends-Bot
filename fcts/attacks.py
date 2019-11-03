@@ -45,9 +45,9 @@ class AttacksCog(commands.Cog):
                         "Epée de l'ordre":self.a_24,
                         "Bombe fumigène":self.c_24,
                         "Lame cachée":self.u_24,
-                        "Mitraillage fou":self.a_25,
-                        "Rire entrainant":self.c_25,
-                        "Bombe hilarante":self.u_25,
+                        "Découpe souriante":self.a_25,
+                        "Rire inarrêtable":self.c_25,
+                        "Représentation spectaculaire":self.u_25,
                         "Gobage":self.a_32,
                         "Chute d'étoile":self.c_32,}
     
@@ -437,10 +437,14 @@ class AttacksCog(commands.Cog):
         return txt
 
     async def a_25(self,perso):
-        "Mitraillage fou"
+        "Découpe souriante"
         target = await self.select_random_players(1,perso.Team2)
-        points = await self.apply_dmg(target[0],26,perso)
-        txt = "{} utilise sa mitraillette sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
+        points = await self.apply_dmg(target[0],24,perso)
+        if random.random()<0.1:
+            self.add_effects(target,'_on_bleeding',2)
+            txt = "{} utilise sa scie sur {} et lui fait {} PV de dégâts, en plus de lui causer une hémorragie ! ".format(perso.name,target[0].name,points)
+        else:
+            txt = "{} utilise sa scie sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>10:
             txt += random.choice(self.critical)
         elif points<10:
@@ -448,7 +452,7 @@ class AttacksCog(commands.Cog):
         return txt
     
     async def c_25(self,perso):
-        "Rire entrainant"
+        "Rire inarrêtable"
         targets1 = await self.select_random_players(2,perso.Team1,avoid_player=perso)
         for i in targets1:
             i.attack_bonus += 1
@@ -460,7 +464,7 @@ class AttacksCog(commands.Cog):
         return txt
     
     async def u_25(self,perso):
-        "Bombe hilarante"
+        "Représentation spectaculaire"
         for target in await self.select_random_players(50,perso.Team2):
             await self.apply_dmg(target,26,perso)
             await self.add_effects(target,'_on_poison',2)
