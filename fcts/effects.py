@@ -40,7 +40,7 @@ class EffectsCog(commands.Cog):
         for p in persos:
             p.frozen = 0
             for i in ['_on_fire','_on_poison','_on_bleeding']:
-                p.pop(i,None)
+                persos.pop(i,None)
 
     async def on_fire(self,perso):
         """On Fire!"""
