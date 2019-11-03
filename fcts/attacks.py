@@ -127,7 +127,7 @@ class AttacksCog(commands.Cog):
             possible_players = [x for x in possible_players if x.type==has_type]
         while len(players) < min(len(possible_players),nbr):
             t = rdm_coef([x.provocation_coef for x in possible_players])
-            if Team.players[t] in players:
+            if t>=len(Team.players) or Team.players[t] in players:
                 continue
             players.append(Team.players[t])
             IDs.append(t)
