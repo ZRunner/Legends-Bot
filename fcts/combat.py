@@ -109,7 +109,7 @@ class CombatCog(commands.Cog):
             await self.bot.cogs["ErrorsCog"].on_error(e,None)
         
 
-    async def begin(self,ctx):
+    async def begin(self,ctx,tours:int):
         """Attend un début de partie"""
         if ctx.author in self.in_combat:
             return await ctx.send("{}, Vous avez déjà un combat en cours !".format(ctx.author.mention))
@@ -183,7 +183,7 @@ class CombatCog(commands.Cog):
                 p.Team2 = Team1
             # Début des tours
             self.bot.log.debug("Début d'un combat entre {u.name} ({u.id}) et {a.name} ({a.id})".format(u=ctx.author,a=user))
-            await self.make_tours(ctx,Team1,Team2)
+            await self.make_tours(ctx,Team1,Team2,tours)
 
         except Exception as e:
             await self.bot.cogs["ErrorsCog"].on_command_error(ctx,e)
@@ -224,7 +224,7 @@ class CombatCog(commands.Cog):
             result = await self.bot.cogs['AttacksCog'].attacks[action[0]](perso)
         return result
 
-    async def make_tours(self,ctx:commands.Context,Team1:Team,Team2:Team):
+    async def make_tours(self,ctx:commands.Context,Team1:Team,Team2:Team,tours:int):
         """Fait passer un tour"""
         # Préparation de l'embed
         title = "Combat : {} contre {}".format(Team1.user.display_name,Team2.user.display_name)
@@ -235,7 +235,7 @@ class CombatCog(commands.Cog):
         random.shuffle(Team2.players)
         await self.apply_passifs(Team1, Team2)
 
-        while Team2.rounds<8:
+        while Team2.rounds<tours:
             if not (Team1.user in self.in_combat or Team2.user in self.in_combat):
                 break
 
