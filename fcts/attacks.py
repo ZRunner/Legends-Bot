@@ -232,7 +232,7 @@ class AttacksCog(commands.Cog):
         names = list()
         for t in targets:
             await self.apply_dmg(t,26,perso)
-            t.attack_boost -= 1
+            t.attack_bonus -= 1
             names.append(t.name)
         return "{p} crie **Fus Roh Dah** à {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige de lourds dégâts !".format(p=perso.name,t=names)
 
@@ -340,8 +340,8 @@ class AttacksCog(commands.Cog):
     async def u_16(self,perso):
         "Flammes de l'enfer"
         for target in await self.select_random_players(50,perso.Team2):
-            await self.add_effects(perso.Team2.players[target],'_on_fire',3)
-            await self.apply_dmg(perso.Team2.players[target],12,perso,False)
+            await self.add_effects(target,'_on_fire',3)
+            await self.apply_dmg(target,12,perso,False)
         return "{p} enflamme l'équipe adverse, réduisant leurs PV de 12 points !".format(p=perso.name)
 
     async def a_17(self,perso):
@@ -491,7 +491,7 @@ class AttacksCog(commands.Cog):
             txt += random.choice(self.critical)
         elif points<10:
             txt += random.choice(self.escape)
-        allys,_ = await self.select_random_players(2,perso.Team1,avoid_player=perso)
+        allys = await self.select_random_players(2,perso.Team1,avoid_player=perso)
         for a in allys+[perso]:
             a.shield += 1
         return txt
@@ -509,9 +509,9 @@ class AttacksCog(commands.Cog):
     async def a_0(self,perso):
         "Exemple"
         target = await self.select_random_players(1,perso.Team2)
-        points = await self.apply_dmg(perso.Team2.players[target],10,perso)
+        points = await self.apply_dmg(target,10,perso)
         perso.invisible += 1
-        txt = "{} utilise ses pouvoirs magiques sur {} et fait {} PV de dégâts ! ".format(perso.name,perso.Team2.players[target].name,points)
+        txt = "{} utilise ses pouvoirs magiques sur {} et fait {} PV de dégâts ! ".format(perso.name,target.name,points)
         if points>10:
             txt += random.choice(self.critical)
         elif points<10:
