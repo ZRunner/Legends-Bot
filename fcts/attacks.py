@@ -94,7 +94,7 @@ class AttacksCog(commands.Cog):
             await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
         points += round(points * (attack_boost*0.25),1)
         if critic and random.random() < await self.calc_critic(perso.lvl):
-            points += round(random.randint(35,55)/100*points,1)
+            points += round(random.randint(20,30)/100*points,1)
         damage, perso.shield = await self.attack_with_shield(perso.shield,points,perso.life[0])
         perso.life[0] = max(0,perso.life[0]-damage)
         if perso.thorny:
@@ -105,7 +105,8 @@ class AttacksCog(commands.Cog):
         return round(points,None if int(points)==points else 1)
     
     async def calc_critic(self,level) -> float:
-        return min(exp(level/100) - 1, 0.85)
+        #return min(exp(level/100) - 1, 0.85)
+        return 0.1
 
     
     async def select_random_players(self,nbr:int,Team:list,avoid_player=None,has_type:str=None,return_index:bool=False) -> list:
