@@ -13,7 +13,9 @@ class EffectsCog(commands.Cog):
             'Guerrier imbattable':self.p_1,
             'Pistolet à portails':self.p_2,
             'Espiègle et rusé':self.p_3,
-            'Fils de dragon':self.p_5,
+            'Combattant de boss':self.p_4,
+            'Discrétion surnaturelle':self.p_5,
+            'Alien amélioré':self.p_6,
             'Danger silencieux':self.p_8,
             'Tchoa':self.p_10,
             'Terreur nocturne':self.p_11,
@@ -89,10 +91,22 @@ class EffectsCog(commands.Cog):
             perso.attack_bonus_type['Guerrier'] = 10
             perso.initialized = True
 
-    async def p_5(self,perso):
-        """Fils de dragon"""
+    async def p_4(self,perso):
+        """Combattant de boss"""
         if not perso.initialized:
-            perso.esquive -= 6
+            perso.attack_bonus_type['Destructeur'] = 10
+            perso.initialized = True
+
+    async def p_5(self,perso):
+        """Discrétion surnaturelle"""
+        if not perso.initialized:
+            perso.esquive = 14
+            perso.initialized = True
+
+    async def p_6(self,perso):
+        """Alien amélioré"""
+        if (not perso.initialized) or (not perso.name in self.poison_immunes):
+            self.poison_immunes.append(perso.name)
             perso.initialized = True
 
     async def p_8(self,perso):
@@ -105,7 +119,7 @@ class EffectsCog(commands.Cog):
     async def p_10(self,perso):
         """Tchoa"""
         if not perso.initialized:
-            perso.critical += 20
+            perso.critical += 15
         perso.initialized = True
 
     async def p_11(self,perso):

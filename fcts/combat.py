@@ -38,13 +38,13 @@ class Perso:
         self.shield = 0
         self.invisible = 0
         self.critical = 10
-        self.attack_bonus = 0
+        self.attack_bonus = 0 # par unité
         self.initialized = False
-        self.esquive = esquive
+        self.esquive = esquive # donner/enlever 20-40 à chaque fois
         self.thorny = False
         self.type = Type
         self.provocation_coef = 1
-        self.attack_bonus_type = dict() # {type : boost}
+        self.attack_bonus_type = dict() # {type : boost} pour les boosts contre un type de perso particulier
         self.passifType = passifType
         self.Team1 = None # sa propre équipe
         self.Team2 = None # équipe adverse

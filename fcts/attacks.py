@@ -21,9 +21,15 @@ class AttacksCog(commands.Cog):
                         "Pour les voleurs":self.a_3,
                         "Araignée géante":self.c_3,
                         "Le précieux":self.u_3,
-                        "Epée volée":self.a_5,
-                        'Hache du Pyrobarbare':self.c_5,
-                        "Fus Roh Dah":self.u_5,
+                        "Doigt pistolet":self.a_4,
+                        "Bonus tactique":self.c_4,
+                        "Déluge de lait":self.u_4,
+                        "Hache volée":self.a_5,
+                        "Cri destructeur":self.c_5,
+                        "Déferlante de magie":self.u_5,
+                        "Main mutée":self.a_6,
+                        "Corps acide":self.c_6,
+                        "Seconde bouche":self.u_6,
                         "Epées rouillées":self.a_9,
                         "Sort de rage":self.c_9,
                         "Renforts aériens":self.u_9,
@@ -55,6 +61,15 @@ class AttacksCog(commands.Cog):
     async def on_ready(self):
         self.add_effects = self.bot.cogs['EffectsCog'].add_effects
 
+    async def merge_names(self,names:list) -> str:
+        if not isinstance(names[0],str):
+            names = [x.name for x in names]
+        if len(names) == 1:
+            return names[0]
+        elif len(names) == 2:
+            return names[0] + " et " + names[1]
+        else:
+            return ", ".join(names[:-2]) + " et "+ names[-1]
     
     async def calc_shield(self,points:int):
         if points == 0:
@@ -204,8 +219,39 @@ class AttacksCog(commands.Cog):
             txt += random.choice(self.escape)
         return txt
 
+    async def a_4(self,perso):
+        "Doigt pistolet"
+        target = await self.select_random_players(1,perso.Team2)
+        points = await self.apply_dmg(target,26,perso)
+        perso.invisible += 1
+        txt = "{} utilise son doigt sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target.name,points)
+        if points>26:
+            txt += random.choice(self.critical)
+        elif points<26:
+            txt += random.choice(self.escape)
+        return txt
+
+    async def c_4(self,perso):
+        "Bonus tactique"
+        targets_attack = await self.select_random_players(3,perso.Team1)
+        for t in targets_attack:
+            t.attack_bonus += 1
+        targets_shield = await self.select_random_players(2,perso.Team1)
+        for t in targets_shield:
+            t.shield += 1
+        return "{} utilise ses compétences sur {} en leur procurant un boost d'attaque, et ajoute un bouclier à {} ! ".format(perso.name,await self.merge_names(targets_attack),await self.merge_names(targets_shield))
+
+    async def u_4(self,perso):
+        "Déluge de lait"
+        for t in await self.select_random_players(50,perso.Team2):
+            await self.apply_dmg(t,28,perso)
+        targets_shield = await self.select_random_players(2,perso.Team2)
+        for t in targets_shield:
+            t.shield -= 1
+        return "{} utilise ses compétences sur l'équipe adverse en leur infligeant 28pv de dégâts, et réduit le bouclier de {} ! ".format(perso.name,await self.merge_names(targets_shield))
+
     async def a_5(self,perso):
-        "Epée volée"
+        "Hache volée"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],24,perso)
         txt = "{} utilise son épée contre {}, et fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
@@ -216,26 +262,61 @@ class AttacksCog(commands.Cog):
         return txt
     
     async def c_5(self,perso):
-        "Hache du Pyrobarbare"
+        "Cri destructeur"
+        targets = await self.select_random_players(5,perso.Team2)
+        for e,p in enumerate(targets):
+            if e<3:
+                p.attack_bonus -= 1
+            else:
+                p.esquive -= 25
+        return "{} utilise son cri contre l'équipe adverse, réduisant l'attaque de {}, et l'esquive de {}. ".format(perso.name, await self.merge_names(targets[:3]), await self.merge_names(targets[3:]))
+    
+    async def u_5(self,perso):
+        "Déferlante de magie"
+        for t in await self.select_random_players(5,perso.Team2):
+            await self.apply_dmg(t,20,perso)
+        targets_fire = await self.select_random_players(2,perso.Team2)
+        for t in targets_fire:
+            await self.add_effects(t,'_on_fire',1)
+        target_poison = await self.select_random_players(1,perso.Team2)
+        for t in target_poison:
+            await self.add_effects(t,'_on_poison',1)
+        perso.attack_bonus += 1
+        gr = "s'enflamment" if len(targets_fire)>1 else "s'enflamme"
+        return "{p} utilise sa magie contre l'équipe adverse, leur causant 20pv de dégâts. De plus {fire} {gr}, et {poison}".format(p=perso.name,fire = await self.merge_names(targets_fire),gr=gr,poison=target_poison.name)
+    
+    async def a_6(self,perso):
+        "Main mutée"
         target = await self.select_random_players(1,perso.Team2)
-        points = await self.apply_dmg(target[0],28,perso)
-        await self.add_effects(target[0],'_on_fire',2)
-        txt =  "{} utilise sa hache contre {}, et fait {} PV de dégâts en l'enflammant. ".format(perso.name,target[0].name,points)
-        if points>28:
+        points = await self.apply_dmg(target,20,perso)
+        perso.invisible += 1
+        txt = "{} attaque de sa main sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target.name,points)
+        if points>20:
             txt += random.choice(self.critical)
-        elif points<28:
+        elif points<20:
             txt += random.choice(self.escape)
         return txt
     
-    async def u_5(self,perso):
-        "Fus Roh Dah"
+    async def c_6(self,perso):
+        "Corps acide"
         targets = await self.select_random_players(3,perso.Team2)
-        names = list()
         for t in targets:
-            await self.apply_dmg(t,26,perso)
-            t.attack_bonus -= 1
-            names.append(t.name)
-        return "{p} crie **Fus Roh Dah** à {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige de lourds dégâts !".format(p=perso.name,t=names)
+            await self.add_effects(t,'_on_poison',1)
+        perso.thorny = True
+        txt = "{} empoisonne {} et se protège contre la prochaine attaque ! ".format(perso.name, await self.merge_names(targets))
+        return txt
+    
+    async def u_6(self,perso):
+        "Seconde bouche"
+        target = await self.select_random_players(1,perso.Team2)
+        points = await self.apply_dmg(target,30,perso)
+        perso.invisible += 1
+        txt = "{} mord violemment {} en lui faisant {} PV de dégâts, avec un effet de poison ! ".format(perso.name,target.name,points)
+        if points>30:
+            txt += random.choice(self.critical)
+        elif points<30:
+            txt += random.choice(self.escape)
+        return txt
 
     async def a_9(self,perso):
         "Epées rouillées"
