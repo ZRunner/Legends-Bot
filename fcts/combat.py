@@ -305,6 +305,8 @@ class CombatCog(commands.Cog):
             text += '{}**|** :fire: {}'.format(emojis['none'],p.effects['_on_fire'][1])
         if "_on_bleeding" in p.effects.keys() and p.effects['_on_bleeding'][1]>0:
             text += '{}**|** {}: {}'.format(emojis['none'],emojis['blood'],p.effects['_on_bleeding'][1])
+        if "_on_poison" in p.effects.keys() and p.effects['_on_poison'][1]>0:
+            text += '{}**|** {}: {}'.format(emojis['none'],emojis['poison'],p.effects['_on_poison'][1])
         text += '{}**|** Energie : {}'.format(emojis['none'],p.points)
         if p.shield > 0:
             text += "{}**|**  {} {}".format(emojis['none'],'🛡',p.shield)
@@ -312,7 +314,7 @@ class CombatCog(commands.Cog):
             text += "{}**|**  {} {}".format(emojis['none'],emojis['invisible'],p.invisible)
         if p.frozen > 0:
             text += "{}**|**  {} {}".format(emojis['none'],':snowflake:',p.frozen)
-        used_effects = ('on_fire', 'on_bleeding')
+        used_effects = ('on_fire', 'on_bleeding','on_poison')
         other_effects = [x[0].__doc__ for x in p.effects.values() if (x[0].__name__ not in used_effects) and x[1]>0]
         if len(other_effects)>0:
             text += "{}**|**  {} {}".format(emojis['none'],emojis['effect'],' '.join(other_effects))
@@ -326,9 +328,10 @@ class CombatCog(commands.Cog):
         ko_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('ko'))
         invisible_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('invisible'))
         blood_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('bleed'))
+        poison_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('poison'))
         emb.fields[1]['name'] = "Equipe de "+Team1.user.display_name
         text = ""
-        emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji}
+        emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji,'poison':poison_emoji}
         for p in Team1.players:
             text += "\n"+await self.create_perso_status(p,emojis_map)
         emb.fields[1]['value'] = text[:1024]
