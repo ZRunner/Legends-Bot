@@ -19,7 +19,8 @@ class UtilitiesCog(commands.Cog):
         'vide':552451143004061696,
         'effects':552848967377879040,
         'invisible':639951219254624267,
-        'ko':640312453103878165}
+        'ko':640312453103878165,
+        'bleed':640580514012463141}
         self.config = self.get_bot_infos()
 
     async def get_emoji(self,name):
