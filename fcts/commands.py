@@ -119,7 +119,7 @@ class Commands(commands.Cog):
 
 
     @commands.command(name="combat")
-    async def combat(self,ctx,tours:int=5):
+    async def combat(self,ctx,tours:int=None):
         """Lance un combat"""
         asyncio.run_coroutine_threadsafe(self.bot.cogs['CombatCog'].begin(ctx,tours),asyncio.get_running_loop())
 
