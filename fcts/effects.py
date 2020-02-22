@@ -8,8 +8,8 @@ class EffectsCog(commands.Cog):
         self.fire_immunes = ['Dohvakiin']
         self.poison_immunes = ['Xénomorphe']
         self.effects = {'_on_fire':self.on_fire,
-            '_on_poison':self.poison,
-            '_on_bleeding':self.saignement,
+            '_on_poison':self.on_poison,
+            '_on_bleeding':self.on_bleeding,
             'Guerrier imbattable':self.p_1,
             'Pistolet à portails':self.p_2,
             'Espiègle et rusé':self.p_3,
@@ -42,7 +42,7 @@ class EffectsCog(commands.Cog):
         for p in persos:
             p.frozen = 0
             for i in ['_on_fire','_on_poison','_on_bleeding']:
-                persos.pop(i,None)
+                p.effects.pop(i,None)
 
     async def on_fire(self,perso):
         """On Fire!"""
@@ -51,14 +51,14 @@ class EffectsCog(commands.Cog):
         if perso.life[0] < 0:
             perso.life[0] = 0
     
-    async def poison(self,perso):
+    async def on_poison(self,perso):
         """Poison"""
         lvl = perso.lvl
         perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
         if perso.life[0] < 0:
             perso.life[0] = 0
     
-    async def saignement(self,perso):
+    async def on_bleeding(self,perso):
         """Saignement"""
         lvl = perso.lvl
         perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
@@ -76,7 +76,6 @@ class EffectsCog(commands.Cog):
                 if target==perso:
                     target.esquive = min(0,target.esquive-3)
         perso.initialized = True
-        perso.invisible = 1
     
     async def p_2(self,perso):
         """Pistolet à portails"""
