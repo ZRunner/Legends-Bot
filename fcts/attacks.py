@@ -117,7 +117,7 @@ class AttacksCog(commands.Cog):
             attacker.life[0] = max(0, attacker.life[0]-damage)
         if perso.passifType != 'H':
             await self.bot.cogs['CombatCog'].apply_one_passif(perso)
-        return round(points,None if int(points)==points else 1)
+        return round(points, None if int(points)==points else 1)
     
     async def calc_critic(self,level) -> float:
         #return min(exp(level/100) - 1, 0.85)
@@ -139,14 +139,19 @@ class AttacksCog(commands.Cog):
         players = list()
         IDs = list()
         possible_players = [x for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player]
+        if len([1 for x in Team.players if x.life[0]<=0]) > 0:
+            print([(x.name, x.life) for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player])
         if has_type!=None:
             possible_players = [x for x in possible_players if x.type==has_type]
-        while len(players) < min(len(possible_players),nbr):
+        len_targets = min(len(possible_players),nbr)
+        while len(players) < len_targets:
             t = rdm_coef([x.provocation_coef for x in possible_players])
             if t>=len(Team.players) or Team.players[t] in players:
                 continue
-            players.append(Team.players[t])
-            IDs.append(t)
+            players.append(possible_players[t])
+            IDs.append(Team.players.index(players[-1]))
+            print("  ", t, [x.provocation_coef for x in possible_players])
+            possible_players.pop(t)
         if return_index:
             return players,IDs
         else:
@@ -160,7 +165,7 @@ class AttacksCog(commands.Cog):
         txt = "{} donne des coups puissants avec son sabre laser contre {}, et fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
         if points>14:
             txt += random.choice(self.critical)
-        elif points<14:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
     
@@ -184,7 +189,7 @@ class AttacksCog(commands.Cog):
             await self.apply_dmg(t,22,perso,False)
             await self.add_effects(t,'_on_fire',2)
             names.append(t.name)
-        txt =  "Le ciel s'obscurcit avec l'apparition d'une planète. {p} lui fait envoyer un rayon destructeur sur {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige 22 PV de dégâts, et les enflamme !".format(p=perso.name,t=names)
+        txt =  "Le ciel s'obscurcit avec l'apparition d'une planète. {p} lui fait envoyer un rayon destructeur sur {t}, ce qui leur inflige 22 PV de dégâts, et les enflamme !".format(p=perso.name,t = await self.merge_names(names))
         return txt
 
     async def a_3(self,perso):
@@ -194,7 +199,7 @@ class AttacksCog(commands.Cog):
         txt = "{} se jette sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>20:
             txt += random.choice(self.critical)
-        elif points<20:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
     
@@ -215,7 +220,7 @@ class AttacksCog(commands.Cog):
         txt = "La main de {} scintille un instant. Il devient invisible et parvient à faire {} PV de dégâts à {} ! ".format(perso.name,points,target[0].name)
         if points>32:
             txt += random.choice(self.critical)
-        elif points<32:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -227,7 +232,7 @@ class AttacksCog(commands.Cog):
         txt = "{} utilise son doigt sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target.name,points)
         if points>26:
             txt += random.choice(self.critical)
-        elif points<26:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -257,7 +262,7 @@ class AttacksCog(commands.Cog):
         txt = "{} utilise son épée contre {}, et fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
         if points > 24:
             txt += random.choice(self.critical)
-        elif points<24:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
     
@@ -283,7 +288,10 @@ class AttacksCog(commands.Cog):
             await self.add_effects(t,'_on_poison',1)
         perso.attack_bonus += 1
         gr = "s'enflamment" if len(targets_fire)>1 else "s'enflamme"
-        return "{p} utilise sa magie contre l'équipe adverse, leur causant 20pv de dégâts. De plus {fire} {gr}, et {poison}".format(p=perso.name,fire = await self.merge_names(targets_fire),gr=gr,poison=target_poison.name)
+        txt = "{p} utilise sa magie contre l'équipe adverse, leur causant 20pv de dégâts. De plus {fire} {gr}".format(p=perso.name,fire = await self.merge_names(targets_fire),gr=gr)
+        if len(target_poison)==1:
+            txt += ", et {} est empoisonné".format(target_poison[0].name)
+        return txt+" ! "
     
     async def a_6(self,perso):
         "Main mutée"
@@ -293,7 +301,7 @@ class AttacksCog(commands.Cog):
         txt = "{} attaque de sa main sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target.name,points)
         if points>20:
             txt += random.choice(self.critical)
-        elif points<20:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
     
@@ -314,7 +322,7 @@ class AttacksCog(commands.Cog):
         txt = "{} mord violemment {} en lui faisant {} PV de dégâts, avec un effet de poison ! ".format(perso.name,target.name,points)
         if points>30:
             txt += random.choice(self.critical)
-        elif points<30:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -325,7 +333,7 @@ class AttacksCog(commands.Cog):
         txt = "La {} se retourne contre {}, lui infligeant {}pv de dégât !".format(perso.name,target[0].name,points)
         if points>10:
             txt += random.choice(self.critical)
-        elif points<10:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
     
@@ -354,7 +362,7 @@ class AttacksCog(commands.Cog):
         txt = "{} vide ses poches sur {}, en lui faisant au passage {} PV de dégâts. ".format(perso.name,target[0].name,points)
         if points>10:
             txt += random.choice(self.critical)
-        elif points<10:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
     
@@ -365,7 +373,7 @@ class AttacksCog(commands.Cog):
         for t in targets:
             await self.apply_dmg(t,18,perso)
             names.append(t.name)
-        return "{p} déverse ses stocks de bières contre {t[0]}, {t[1]} et {t[2]}, ce qui leur inflige 18 PV de dégâts !".format(p=perso.name,t=names)
+        return "{p} déverse ses stocks de bières contre {t}, ce qui leur inflige 18 PV de dégâts !".format(p=perso.name,t = await self.merge_names(names))
     
     async def u_10(self,perso):
         "Donut atomique"
@@ -380,7 +388,7 @@ class AttacksCog(commands.Cog):
         txt = "{} envoie une boule de neige sur {}, et fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>26:
             txt += random.choice(self.critical)
-        elif points<26:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
     
@@ -433,7 +441,7 @@ class AttacksCog(commands.Cog):
         txt = "{} porte un coup à {}, et fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
         if points>22:
             txt += random.choice(self.critical)
-        elif points<22:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -450,7 +458,7 @@ class AttacksCog(commands.Cog):
         txt = "{} fixe {}, et brusquement lui fait {} PV de dégâts. ".format(perso.name,target[0].name,points)
         if points>36:
             txt += random.choice(self.critical)
-        elif points<36:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -461,7 +469,7 @@ class AttacksCog(commands.Cog):
         txt = "{} utilise ses outils tranchants sur {}, et fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>10:
             txt += random.choice(self.critical)
-        elif points<10:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -486,7 +494,7 @@ class AttacksCog(commands.Cog):
         txt = "{} utilise son épée sur {}, et fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>20:
             txt += random.choice(self.critical)
-        elif points<20:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -513,7 +521,7 @@ class AttacksCog(commands.Cog):
         txt = "{} disparaît dans la fumée, et utilise sa lame cachée pour faire {} de dégâts à {} ".format(perso.name,points,target[0].name)
         if points>34:
             txt += random.choice(self.critical)
-        elif points<34:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -528,7 +536,7 @@ class AttacksCog(commands.Cog):
             txt = "{} utilise son couteau sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>10:
             txt += random.choice(self.critical)
-        elif points<10:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
     
@@ -561,7 +569,7 @@ class AttacksCog(commands.Cog):
         txt = "{} avale des objets et les recrache sous forme d'étoile contre {}, lui faisant {} PV de dégâts ! ".format(perso.name,target[0].name,points)
         if points>14:
             txt += random.choice(self.critical)
-        elif points<14:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 
@@ -575,7 +583,7 @@ class AttacksCog(commands.Cog):
         txt = "{} attaque {} et {}, ce qui fait baisser leurs PV de {} points ".format(perso.name,targets[0].name,targets[1].name,points)
         if points>10:
             txt += random.choice(self.critical)
-        elif points<10:
+        elif points==0:
             txt += random.choice(self.escape)
         allys = await self.select_random_players(2,perso.Team1,avoid_player=perso)
         for a in allys+[perso]:
@@ -600,7 +608,7 @@ class AttacksCog(commands.Cog):
         txt = "{} utilise ses pouvoirs magiques sur {} et fait {} PV de dégâts ! ".format(perso.name,target.name,points)
         if points>10:
             txt += random.choice(self.critical)
-        elif points<10:
+        elif points==0:
             txt += random.choice(self.escape)
         return txt
 

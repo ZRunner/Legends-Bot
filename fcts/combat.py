@@ -234,8 +234,12 @@ class CombatCog(commands.Cog):
         random.shuffle(Team1.players)
         random.shuffle(Team2.players)
         await self.apply_passifs(Team1, Team2)
+        def check_cond():
+            if isinstance(tours, int):
+                return Team2.rounds > tours
+            return any([x.life[0] > 0 for x in Team1.players]) and any([x.life[0] > 0 for x in Team2.players])
 
-        while Team2.rounds<tours:
+        while check_cond():
             if not (Team1.user in self.in_combat or Team2.user in self.in_combat):
                 break
 
@@ -293,12 +297,14 @@ class CombatCog(commands.Cog):
 
 
     async def create_perso_status(self,p:Perso,emojis:dict):
-        life = round(p.life[0], 0 if p.life[0]==int(p.life[0]) else 1)
+        life = round(p.life[0], None if p.life[0]==int(p.life[0]) else 1)
         if life==0:
             return '{} ({}) : {} K.O.'.format(p.name,p.classe,emojis['ko'])
         text = '{} ({}) : {} {}/{}'.format(p.name,p.classe,emojis['life'],life,p.life[1])
         if "_on_fire" in p.effects.keys() and p.effects['_on_fire'][1]>0:
             text += '{}**|** :fire: {}'.format(emojis['none'],p.effects['_on_fire'][1])
+        if "_on_bleeding" in p.effects.keys() and p.effects['_on_bleeding'][1]>0:
+            text += '{}**|** {}: {}'.format(emojis['none'],emojis['blood'],p.effects['_on_bleeding'][1])
         text += '{}**|** Energie : {}'.format(emojis['none'],p.points)
         if p.shield > 0:
             text += "{}**|**  {} {}".format(emojis['none'],'🛡',p.shield)
@@ -306,7 +312,8 @@ class CombatCog(commands.Cog):
             text += "{}**|**  {} {}".format(emojis['none'],emojis['invisible'],p.invisible)
         if p.frozen > 0:
             text += "{}**|**  {} {}".format(emojis['none'],':snowflake:',p.frozen)
-        other_effects = [x[0].__doc__ for x in p.effects.values() if x[0].__name__!='on_fire' and x[1]>0]
+        used_effects = ('on_fire', 'on_bleeding')
+        other_effects = [x[0].__doc__ for x in p.effects.values() if (x[0].__name__ not in used_effects) and x[1]>0]
         if len(other_effects)>0:
             text += "{}**|**  {} {}".format(emojis['none'],emojis['effect'],' '.join(other_effects))
         return text
@@ -317,19 +324,20 @@ class CombatCog(commands.Cog):
         none_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('vide'))
         effect_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('effects'))
         ko_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('ko'))
-        invisible_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('invisibility'))
+        invisible_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('invisible'))
+        blood_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('bleed'))
         emb.fields[1]['name'] = "Equipe de "+Team1.user.display_name
         text = ""
-        emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji}
+        emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji}
         for p in Team1.players:
             text += "\n"+await self.create_perso_status(p,emojis_map)
-        emb.fields[1]['value'] = text
+        emb.fields[1]['value'] = text[:1024]
 
         emb.fields[2]['name'] = "Equipe de "+Team2.user.display_name
         text = ""
         for p in Team2.players:
             text += "\n"+await self.create_perso_status(p,emojis_map)
-        emb.fields[2]['value'] = text
+        emb.fields[2]['value'] = text[:1024]
 
     async def ask_action(self,msg,emb,perso,player):
         """Demande à un joueur de choisir une action"""
