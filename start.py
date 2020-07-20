@@ -7,7 +7,7 @@ t1=time.time()
 #Here we import some libs
 def check_libs():
     count = 0
-    for m in ["mysql","discord","psutil"]:
+    for m in ["mysql","discord","psutil","requests"]:
         try:
             exec("import "+m)
             exec("del "+m)
@@ -73,7 +73,7 @@ class zbot(commands.bot.BotBase,discord.Client):
         self.database_online = database_online
         self.log = logging.getLogger("runner")
         self._cnx = [None,0]
-        self.database_keys = {'user':'legendsbot','password':'12lEGE-nD-0754','host':'51.77.212.245','database':'legends_club'}
+        self.database_keys = {'user':'legendsbot','password':'12lEGE-nD-0754','host':'137.74.246.110','database':'legends_club'}
     
     async def user_avatar_as(self,user,size=512):
         """Get the avatar of an user, format gif or png (as webp isn't supported by some browsers)"""
