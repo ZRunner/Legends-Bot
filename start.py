@@ -7,7 +7,7 @@ t1=time.time()
 #Here we import some libs
 def check_libs():
     count = 0
-    for m in ["timeout_decorator","mysql","discord","asyncio","datetime","importlib","traceback","sys","logging"]:
+    for m in ["mysql","discord","psutil"]:
         try:
             exec("import "+m)
             exec("del "+m)
