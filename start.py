@@ -7,7 +7,7 @@ t1=time.time()
 #Here we import some libs
 def check_libs():
     count = 0
-    for m in ["timeout_decorator","mysql","discord","asyncio","datetime","importlib","traceback","sys","logging"]:
+    for m in ["mysql","discord","asyncio","datetime","importlib","traceback","sys","logging"]:
         try:
             exec("import "+m)
             exec("del "+m)
@@ -66,14 +66,14 @@ def setup_logger():
 
     return log
 
-class zbot(commands.bot.BotBase,discord.Client):
+class zbot(commands.AutoShardedBot):
 
     def __init__(self,command_prefix=None,case_insensitive=None,status=None,database_online=True):
         super().__init__(command_prefix=command_prefix,case_insensitive=case_insensitive,status=status)
         self.database_online = database_online
         self.log = logging.getLogger("runner")
         self._cnx = [None,0]
-        self.database_keys = {'user':'legendsbot','password':'12lEGE-nD-0754','host':'51.77.212.245','database':'legends_club'}
+        self.database_keys = {'user':'legendsbot','password':'12lEGE-nD-0754','host':'137.74.246.110','database':'legends_club'}
     
     async def user_avatar_as(self,user,size=512):
         """Get the avatar of an user, format gif or png (as webp isn't supported by some browsers)"""
@@ -86,6 +86,10 @@ class zbot(commands.bot.BotBase,discord.Client):
                 return user.avatar_url_as(format='png',size=size)
         except Exception as e:
             await self.cogs['ErrorsCog'].on_error(e,None)
+    
+    @property
+    def _(self):
+        return self.get_cog('LangCog').tr
     
     @property
     def cnx(self):
@@ -117,6 +121,7 @@ initial_extensions = ['fcts.admin',
                     'fcts.classes',
                     'fcts.commands',
                     'fcts.errors',
+                    'fcts.languages',
                     'fcts.persos',
                     'fcts.reloads',
                     'fcts.timeclass',
