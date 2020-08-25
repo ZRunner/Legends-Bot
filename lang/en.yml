@@ -8,8 +8,7 @@ en:
       '4': Critical hit ! !
     dodge:
       '0': Nice dodge !
-      '1': Luckily he dodged !
-      '2': It's a dodge !
+      '1': It's a dodge !
   classes:
     details: "Class details %{classe}"
     dodge: Chances to dodge
