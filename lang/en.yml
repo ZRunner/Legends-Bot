@@ -1,4 +1,21 @@
 en:
+  attack:
+    critical:
+      '0': It's a critical hit !
+      '1': Critical hit !
+      '2': Wow, what a critical hit !
+      '3': It's a critical hit !
+      '4': Critical hit ! !
+    dodge:
+      '0': Nice dodge !
+      '1': Luckily he dodged !
+      '2': It's a dodge !
+  classes:
+    details: "Class details %{classe}"
+    dodge: Chances to dodge
+    field: "Health Points : %{hp}\nChances to dodge : %{esc}%%"
+    hp: Health Points
+    name: Name
   config:
     new_lang: The bot is now in English!
   error:
@@ -22,3 +39,6 @@ en:
     subcmds_list: "Subcommands:"
   perms:
     manage_guild: manage server
+  stats:
+    general: "**Number of servers:** {}\n**Number of visible members:** {} ({} bots)\n**Number of code lines:** {}\n**Python version:** {}\n**Version of the `discord.py` lib:** {}\n**RAM usage:** {} GB\n**CPU usage:** {} %\n**API latency time:** {} ms"
+    title: "Bot statistics"        
