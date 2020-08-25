@@ -22,14 +22,14 @@ class Commands(commands.Cog):
         if nom.lower() not in names:
             emb = self.bot.cogs["EmbedCog"].Embed(title="Liste des classes",color=self.embed_color).update_timestamp().create_footer(ctx.author)
             for c in data:
-                flds.append({'name':c['Name'], 'value':"Points de vie : {}\nChances d'esquive : {}%".format(c['Health'],c['Escape']), 'inline':False})
+                flds.append({'name':c['Name'], 'value':await self.bot._(ctx, 'classes.field', hp=c['Health'], esc=c['Escape']), 'inline':False})
         else:
             c = data[names.index(nom.lower())]
             emojis = ctx.bot.cogs["UtilitiesCog"].emojis
-            emb = self.bot.cogs["EmbedCog"].Embed(title="Détails de la classe {}".format(c['Name']),desc=c['Description'],color=self.embed_color).update_timestamp().create_footer(ctx.author)
-            flds.append({'name':'Nom', 'value':c['Name'], 'inline':False})
-            flds.append({'name':'Points de vie', 'value':"{} {}".format(ctx.bot.get_emoji(emojis['legends_heart']),c['Health']), 'inline':False})
-            flds.append({'name':"Chances d'esquiver", 'value':"{}%".format(c['Escape']), 'inline':False})
+            emb = self.bot.cogs["EmbedCog"].Embed(title=await self.bot._(ctx, 'classes.details', classe=c['Name']),desc=c['Description'],color=self.embed_color).update_timestamp().create_footer(ctx.author)
+            flds.append({'name':await self.bot._(ctx, 'classes.name'), 'value':c['Name'], 'inline':False})
+            flds.append({'name':await self.bot._(ctx, 'classes.hp'), 'value':"{} {}".format(ctx.bot.get_emoji(emojis['legends_heart']),c['Health']), 'inline':False})
+            flds.append({'name':await self.bot._(ctx, 'classes.dodge'), 'value':"{}%".format(c['Escape']), 'inline':False})
         emb.fields = flds
         await ctx.send(embed=emb.discord_embed())
 
@@ -49,16 +49,9 @@ class Commands(commands.Cog):
         py = psutil.Process(pid)
         cl = ctx.bot.cogs['UtilitiesCog'].codelines
         r = requests.get('https://discordapp.com/api/v6')
-        d = """**Nombre de serveurs :** {}
-        **Nombre de membres visibles :** {} ({} bots)
-        **Nombre de lignes de code :** {}
-        **Version de Python :** {}
-        **Version de la bibliothèque `discord.py` :** {}
-        **Charge sur la mémoire vive :** {} GB
-        **Charge sur le CPU :** {} %
-        **Temps de latence de l'api :** {} ms
-        """.format(len(self.bot.guilds),len(self.bot.users),len([x for x in ctx.bot.users if x.bot]),cl,version,discord.__version__,round(py.memory_info()[0]/2.**30,3),psutil.cpu_percent(),round(r.elapsed.total_seconds()*1000,3))
-        emb = self.bot.cogs["EmbedCog"].Embed(title="**Statistiques du bot**",desc=d,color=self.embed_color,fields=[]).update_timestamp().create_footer(ctx.author)
+        d = (await self.bot._(ctx, "stats.general")).format(len(self.bot.guilds),len(self.bot.users),len([x for x in ctx.bot.users if x.bot]),cl,version,discord.__version__,round(py.memory_info()[0]/2.**30,3),psutil.cpu_percent(),round(r.elapsed.total_seconds()*1000,3))
+        t = "**" + await self.bot._(ctx, 'stats.title') + '**'
+        emb = self.bot.cogs["EmbedCog"].Embed(title=t,desc=d,color=self.embed_color,fields=[]).update_timestamp().create_footer(ctx.author)
         await ctx.send(embed=emb.discord_embed())
 
     @commands.command(name="deck")

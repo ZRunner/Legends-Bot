@@ -11,11 +11,6 @@ class HelpCog(commands.Cog):
     '@everyone': '@\u200beveryone',
     '@here': '@\u200bhere'}
         self._mention_pattern = re.compile('|'.join(self._mentions_transforms.keys()))
-        self.cmd_not_found = "Commande `{}` introuvable :confused:"
-        self.subcmd_not_fount = "Sous-commande `{}` introuvable :confused:"
-        self.no_subcmd = "La commande {} ne possède pas de sous-commande"
-        self.no_desc_cog = "Aucune description pour ce module"
-        self.no_desc_cmd = "Aucune description pour cette commande"
         self.send_in_dm = True
 
     
@@ -36,7 +31,7 @@ class HelpCog(commands.Cog):
                 await self._default_help_command(ctx,commands)
 
 
-    async def help_command(self,ctx, commands=()):
+    async def help_command(self, ctx, commands=()):
         """Main command for the creation of the help message
 If the bot can't send the new command format, it will try to send the old one. Enable "Embed Links" permission for better rendering."""
         if self.send_in_dm:
@@ -62,29 +57,29 @@ If the bot can't send the new command format, it will try to send the old one. E
             else:
                 command = self.bot.all_commands.get(name)
                 if command is None:
-                    await destination.send(self.cmd_not_found.format(name))
+                    await destination.send(await self.bot._(ctx, "help.cmd_not_found", cmd=name))
                     return
                 pages = await self.cmd_help(ctx,command)
         else:  #nom de sous-commande ?
             name = self._mention_pattern.sub(repl, commands[0])
             command = self.bot.all_commands.get(name)
             if command is None:
-                await destination.send(self.cmd_not_found.format(name))
+                await destination.send(await self.bot._(ctx, "help.cmd_not_found", cmd=name))
                 return
             for key in commands[1:]:
                 try:
                     key = self._mention_pattern.sub(repl, key)
                     command = command.all_commands.get(key)
                     if command is None:
-                        await destination.send(self.subcmd_not_fount.format(key))
+                        await destination.send(await self.bot._(ctx, "help.subcmd_not_found", cmd=key))
                         return
                 except AttributeError:
-                    await destination.send(self.no_subcmd.format(command))
+                    await destination.send(await self.bot._(ctx, "help.no_subcmd", cmd=command))
                     return
             pages = await self.cmd_help(ctx,command)
 
         me = destination.me if type(destination)==discord.DMChannel else destination.guild.me
-        ft = "Entrez `/help commande` pour plus d'informations sur une commande"
+        ft = await self.bot._(ctx, 'help.more_info', p=ctx.prefix)
         if destination.permissions_for(me).embed_links:
             for page in pages:
                 embed = self.bot.cogs["EmbedCog"].Embed(desc=page,footer_text=ft.format(await self.bot.get_prefix(ctx.message)),fields=[]).update_timestamp().discord_embed()
@@ -102,13 +97,13 @@ If the bot can't send the new command format, it will try to send the old one. E
             except:
                 pass
 
-    async def display_cmd(self,cmd):
+    async def display_cmd(self, cmd):
         return "• **{}**\t\t*{}*".format(cmd.name,cmd.short_doc.strip()) if len(cmd.short_doc)>0 else "• **{}**".format(cmd.name)
 
     def sort_by_name(self,cmd):
             return cmd.name
 
-    async def all_commands(self,ctx):
+    async def all_commands(self, ctx):
         """Create pages for every bot command"""        
         cmds = sorted([c for c in ctx.bot.commands],key=self.sort_by_name)
         helpmsg = ""
@@ -129,9 +124,10 @@ If the bot can't send the new command format, it will try to send the old one. E
         #    return ["__• **{}**__\n{}".format(tr[0],modhelp) + "\n\n__• **{}**__\n{}".format(tr[1],otherhelp)]
         #else:
         #    return ["__• **{}**__\n{}".format(tr[0],modhelp) , "\n\n__• **{}**__\n{}".format(tr[1],otherhelp)]
-        return ["__**Liste des commandes disponibles :**__\n{}".format(helpmsg)]
+        title = await self.bot._(ctx, 'help.cmds_list')
+        return ["__**{}**__\n{}".format(title, helpmsg)]
 
-    async def cog_commands(self,ctx,cog):
+    async def cog_commands(self, ctx, cog):
         """Create pages for every command of a cog"""
         description = inspect.getdoc(cog)
         page = ""
@@ -139,15 +135,14 @@ If the bot can't send the new command format, it will try to send the old one. E
         pages = list()
         cog_name = cog.__class__.__name__
         if description == None:
-            description = self.no_desc_cog
+            description = await self.bot._(ctx, 'help.no_desc_cog')
         for cmd in sorted([c for c in self.bot.commands],key=self.sort_by_name):
             try:
                 if (await cmd.can_run(ctx))==False or cmd.hidden==True or cmd.enabled==False or cmd.cog_name != cog_name:
                     continue
             except Exception as e:
                 if not "discord.ext.commands.errors" in str(type(e)):
-                    await ctx.send("`Error:` {}".format(e))
-                    await self.bot.cogs['ErrorsCog'].on_error(e,ctx)
+                    await self.bot.cogs['ErrorsCog'].on_cmd_error(ctx, e)
                     return []
                 else:
                     continue
@@ -162,13 +157,13 @@ If the bot can't send the new command format, it will try to send the old one. E
     
     async def cmd_help(self,ctx,cmd):
         """Create pages for a command explanation"""
-        desc = cmd.description if cmd.description not in [None,''] else self.no_desc_cmd
+        desc = cmd.description if cmd.description not in [None,''] else await self.bot._(ctx, 'help.no_desc_cmd')
         if desc=='':
             desc = cmd.help
         prefix = await self.bot.get_prefix(ctx.message)
         syntax = cmd.signature.replace(" ","** ",1) if " " in cmd.signature else cmd.signature+"**"
         if type(cmd)==commands.core.Group:
-            subcmds = "\n\n__Sous-commandes :__"
+            subcmds = "\n\n__{}__".format(await self.bot._(ctx, 'help.subcmds_list'))
             sublist = list()
             for x in sorted(cmd.all_commands.values(),key=self.sort_by_name):
                 if x.enabled==False:
@@ -183,7 +178,7 @@ If the bot can't send the new command format, it will try to send the old one. E
 
     async def _default_help_command(self,ctx, commands=()):
         bot = ctx.bot
-        if await self.bot.cogs["ServerCog"].find_staff(ctx.guild.id,'help_in_dm',channel=ctx.channel) == 1:
+        if self.send_in_dm:
             destination = ctx.message.author
             await bot.cogs["UtilitiesCog"].suppr(ctx.message)
         else :
@@ -222,7 +217,7 @@ If the bot can't send the new command format, it will try to send the old one. E
                         await destination.send(bot.command_not_found.format(key))
                         return
                 except AttributeError:
-                    await destination.send(self.no_subcmd.format(command))
+                    await destination.send(await self.bot._(ctx, "help.no_subcmd", cmd=command))
                     return
 
             pages = await bot.formatter.format_help_for(ctx, command)

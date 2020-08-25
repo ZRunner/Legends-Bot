@@ -1,0 +1,44 @@
+fr:
+  attack:
+    critical:
+      '0': C'est un coup critique !
+      '1': Coup critique !
+      '2': Wow, quel coup critique !
+      '3': Il s'agit d'un coup critique !
+      '4': Coup critique !
+    dodge:
+      '0': Belle esquive !
+      '1': Heureusement qu'il a esquivé !
+      '2': C'est une esquive !
+  classes:
+    details: "Détails de la classe %{classe}"
+    dodge: Chances d'esquiver
+    field: "Points de vie : %{hp}\nChances d'esquive : %{esc}%%"
+    hp: Points de vie
+    name: Nom
+  config:
+    new_lang: Le bot est passé en français !
+  error:
+    command_disabled: "La commande %{cmd} est désactivée"
+    command_in_dm: "La commande %{cmd} n'est pas autorisée en Messages Privés"
+    convert: "Oups, impossible de convertir le paramètre `%{arg}` en type \"%{type}\" :confused:"
+    invalid: "`%{arg}` n'est pas une option valide pour %{opt}"
+    member_not_found: "Impossible de trouver le membre %{member} :confused:"
+    missing_argument: "Oups, il manque l'argument \"%{arg}\""
+    missing_perms: Il te manque la permission %{perms}
+    unexpected_error: "Un erreur inconnue est survenue :confused:"
+    user_not_found: "Impossible de trouver l'utilisateur %{user}"
+  help:
+    cmd_not_found: "Commande %{cmd} introuvable"
+    cmds_list: "Liste des commandes disponibles :"
+    more_info: "Entrez `%{p}help commande` pour plus d'informations sur une commande"
+    no_desc_cmd: "Aucune description pour cette commande"
+    no_desc_cog: "Aucune description pour ce module"
+    no_subcmd: "La commande %{cmd} ne possède pas de sous-commande"
+    subcmd_not_found: "Sous-commande %{cmd} introuvable"
+    subcmds_list: "Sous-commandes :"
+  perms:
+    manage_guild: gérer le serveur
+  stats:
+    general: "**Nombre de serveurs :** {}\n**Nombre de membres visibles :** {} ({} bots)\n**Nombre de lignes de code :** {}\n**Version de Python :** {}\n**Version de la bibliothèque `discord.py` :** {}\n**Charge sur la mémoire vive :** {} GB\n**Charge sur le CPU :** {} %\n**Temps de latence de l'api :** {} ms"
+    title: "Statistiques du bot"
