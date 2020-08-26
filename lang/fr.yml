@@ -8,8 +8,7 @@ fr:
       '4': Coup critique !
     dodge:
       '0': Belle esquive !
-      '1': Heureusement qu'il a esquivé !
-      '2': C'est une esquive !
+      '1': C'est une esquive !
   classes:
     details: "Détails de la classe %{classe}"
     dodge: Chances d'esquiver
