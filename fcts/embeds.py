@@ -3,6 +3,7 @@ import discord
 import requests
 from discord.ext import commands
 
+base_url = "https://discordapp.com/api/webhooks/513473320268726322/"
 
 def getIfromRGB(rgb):
     red = rgb[0]
@@ -17,7 +18,7 @@ class EmbedCog(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.logs = "https://discordapp.com/api/webhooks/513473320268726322/a4qc8NbVyymrhjZEvojRDiyniK67VLInWomMNrInTB-0_yh1Bko0rhx1rIUeSpTGWaFY"
+        self.logs = base_url + "a4qc8NbVyymrhjZEvojRDiyniK67VLInWomMNrInTB-0_yh1Bko0rhx1rIUeSpTGWaFY"
         self.file = "embeds"
 
     class Embed:
