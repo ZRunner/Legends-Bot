@@ -104,7 +104,7 @@ class UtilitiesCog(commands.Cog):
                         count += 1
             files = list()
             for cog in self.bot.cogs.values():
-                if cog.file in files: return
+                if cog.file in files: break
                 with open('fcts/'+cog.file+'.py','r') as file:
                     for line in file.read().split("\n"):
                         if len(line.strip())>2 and line[0]!='#':
