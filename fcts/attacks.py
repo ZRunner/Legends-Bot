@@ -104,8 +104,8 @@ class AttacksCog(commands.Cog):
             await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
         if perso.passifType != 'G':
             await self.bot.cogs['CombatCog'].apply_one_passif(perso)
-        if random.randrange(100)<perso.esquive and perso.frozen==0:
-            return 0.0
+        if random.randrange(100) < perso.esquive and perso.frozen == 0:
+            return 0
         attack_boost = attacker.attack_bonus
         if perso.type in attacker.attack_bonus_type.keys():
             attack_boost += attacker.attack_bonus_type[perso.type]
@@ -121,15 +121,27 @@ class AttacksCog(commands.Cog):
             attacker.life[0] = max(0, attacker.life[0]-damage)
         if perso.passifType != 'H':
             await self.bot.cogs['CombatCog'].apply_one_passif(perso)
-        return round(points, None if int(points)==points else 1)
+        return round(points, None if int(points) == points else 1)
     
     async def calc_critic(self,level) -> float:
         #return min(exp(level/100) - 1, 0.85)
         return 0.1
 
     
-    async def select_random_players(self,nbr:int,Team:list,avoid_player=None,has_type:str=None,return_index:bool=False) -> list:
+    async def select_random_players(self, nbr:int, Team:list, avoid_player=None, has_type:str=None, return_index:bool=False, evil:bool=True) -> list:
         """Sort des joueurs aléatoirement d'une équipe"""
+        if not evil:
+            possible_players = [x for x in Team.players if x.life[0] > 0 and x != avoid_player]
+            nbr = min(nbr, len(possible_players))
+            if len(possible_players) == nbr:
+                players = possible_players
+            else:
+                random.shuffle(possible_players)
+                players = possible_players[:nbr]
+            if return_index:
+                return players, [x.id for x in players]
+            return players
+
         def rdm_coef(coefs:list) -> int:
             """Choisit un index dans une liste de coefs"""
             target = random.randrange(sum(coefs))
@@ -247,10 +259,10 @@ class AttacksCog(commands.Cog):
 
     async def c_4(self,perso):
         "Bonus tactique"
-        targets_attack = await self.select_random_players(3,perso.Team1)
+        targets_attack = await self.select_random_players(3, perso.Team1, evil=False)
         for t in targets_attack:
             t.attack_bonus += 1
-        targets_shield = await self.select_random_players(2,perso.Team1)
+        targets_shield = await self.select_random_players(2, perso.Team1, evil=False)
         for t in targets_shield:
             t.shield += 1
         return "{} utilise ses compétences sur {} en leur procurant un boost d'attaque, et ajoute un bouclier à {} ! ".format(perso.name,await self.merge_names(targets_attack),await self.merge_names(targets_shield))
@@ -441,7 +453,11 @@ class AttacksCog(commands.Cog):
         for t in targets:
             await self.apply_dmg(t,20,perso)
         perso.provocation_coef += 1
-        return "{p} utilise son aboiement pour effayer l'équipe adverse, ce qui fait baisser les attaques de  {t[0]}, {t[1]} et {t[2]} !".format(p=perso.name,t=[x.name for x in targets])
+        if len(targets) > 0:
+            t = await self.merge_names([x.name for x in targets])
+            return "{p} utilise son aboiement pour effayer l'équipe adverse, ce qui fait baisser les attaques de  {t} !".format(p=perso.name, t=t)
+        else:
+            return f"{perso.name} n'a trouvé aucun adversaire"
     
     async def u_16(self,perso):
         "Flammes de l'enfer"
@@ -498,7 +514,7 @@ class AttacksCog(commands.Cog):
     
     async def u_22(self,perso):
         "Esprit déterminé"
-        for i in await self.select_random_players(50,perso.Team1,avoid_player=perso):
+        for i in await self.select_random_players(50, perso.Team1, avoid_player=perso, evil=False):
             i.shield += 1
             i.esquive += 30
         return "{}, déterminé comme jamais, soigne et renforce le bouclier de tous ses alliés".format(perso.name)
@@ -558,7 +574,7 @@ class AttacksCog(commands.Cog):
     
     async def c_25(self,perso):
         "Rire inarrêtable"
-        targets1 = await self.select_random_players(2,perso.Team1,avoid_player=perso)
+        targets1 = await self.select_random_players(2, perso.Team1, avoid_player=perso, evil=False)
         for i in targets1:
             i.attack_bonus += 1
         targets2 = await self.select_random_players(3,perso.Team2)
