@@ -118,7 +118,6 @@ class zbot(commands.AutoShardedBot):
         return get_prefix(self,msg)
 
 initial_extensions = ['fcts.admin',
-                    'fcts.classes',
                     'fcts.commands',
                     'fcts.errors',
                     'fcts.languages',
