@@ -38,6 +38,20 @@ fr:
     subcmds_list: "Sous-commandes :"
   perms:
     manage_guild: gérer le serveur
+  player:
+    decktitle: Personnages du joueur %{user}
+    detailstitle: Détails du personnage
+    field: "Classe : %{classe}\nAttaque de base : %{att1}\nCompétence : %{att2}\nCompétence ultime : %{att3}\nCompétence passive : %{passiv}\nPrix actuel : %{price}\n\n%{got_emoji} Obtenu : %{got}"
+    invalidperson: Impossible de trouver ce personnage
+    level: niveau
+    listtitle: Liste des personnages
+    nopeople1: Vous ne possédez aucun personnage !
+    nopeople2: Le joueur %{user} ne possède aucun personnage !
+    notfound: Impossible de trouver le joueur %{user} !
+  start:
+    already: Vous avez déjà des personnages !
+    persons: "Ces personnages sont %{people}.\nVous pouvez entrer `%{p}deck` pour voir la liste de vos personnages, et `%{p}help` pour la liste des commandes disponibles. Bonne chance !"
+    welcome: "Bienvenue %{user} dans l'aventure !\nPour que vous commenciez avec de bonnes bases, nous vous avons donné au hasard 5 personnages."
   stats:
     general: "**Nombre de serveurs :** {}\n**Nombre de membres visibles :** {} ({} bots)\n**Nombre de lignes de code :** {}\n**Version de Python :** {}\n**Version de la bibliothèque `discord.py` :** {}\n**Charge sur la mémoire vive :** {} GB\n**Charge sur le CPU :** {} %\n**Temps de latence de l'api :** {} ms"
     title: "Statistiques du bot"

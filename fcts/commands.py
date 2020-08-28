@@ -63,19 +63,21 @@ class Commands(commands.Cog):
             try:
                 user = await commands.UserConverter().convert(ctx,user)
             except:
-                await ctx.send('Impossible de trouver le joueur {} !'.format(user))
+                await ctx.send(await self.bot._(ctx, "player.notfound", user=user))
                 return
         d = await self.bot.cogs['UsersCog'].get_user_deck(user.id)
         if d == {}:
             if user == ctx.author:
-                await ctx.send("Vous ne possédez aucun personnage !")
+                await ctx.send(await self.bot._(ctx, "player.nopeople1"))
             else:
-                await ctx.send("Le joueur {} ne possède aucun personnage !".format(user))
+                await ctx.send(await self.bot._(ctx, "player.nopeople2", user=user))
             return
         text = list()
+        lvl = await self.bot._(ctx, "player.level")
         for x in sorted(d.values(), key=lambda k: k['level'],reverse=True):
-            text.append("{} (niveau {})".format(x['personnage'],x['level']))
-        emb = self.bot.cogs["EmbedCog"].Embed(title="Personnages du joueur {}".format(user),desc="\n".join(text),color=self.embed_color,fields=[]).update_timestamp().create_footer(ctx.author)
+            text.append("{} ({} {})".format(x['personnage'], lvl, x['level']))
+        t = await self.bot._(ctx, "player.decktitle", user=user)
+        emb = self.bot.cogs["EmbedCog"].Embed(title=t,desc="\n".join(text),color=self.embed_color,fields=[]).update_timestamp().create_footer(ctx.author)
         await ctx.send(embed=emb.discord_embed())
 
 
@@ -91,13 +93,22 @@ class Commands(commands.Cog):
             if k.lower() == str(name).lower() and v['actif']:
                 name = k
         if name in data.keys():
-            x = data[name]
+            x = data[name] # personnage info
+            # Coins emoji
             lg_coin = str(await ctx.bot.cogs['UtilitiesCog'].get_emoji('legends_coin'))
-            emb = self.bot.cogs["EmbedCog"].Embed(title="Détails du personnage",desc=x['Description'],color=self.embed_color).update_timestamp().create_footer(ctx.author)
+            # Embed title
+            t = await self.bot._(ctx, "player.detailstitle")
+            # Embed
+            emb = self.bot.cogs["EmbedCog"].Embed(title=t, desc=x['Description'], color=self.embed_color).update_timestamp().create_footer(ctx.author)
+            # Embed field data
+            price = str(x['Prix']) + lg_coin
             get = 'Oui' if name in deck else 'Non'
-            emb.fields = [{'name':name, 'value':"Classe : {}\nAttaque de base : {}\nCompétence : {}\nCompétence ultime : {}\nCompétence passive : {}\nPrix actuel : {}{}\n\n{} Obtenu : {}".format(x['Class'],x['Attaque 1'],x['Attaque 2'],x['Ultime'],x['Passif'],x['Prix'],lg_coin,':white_check_mark:' if name in deck else ':x:',get), 'inline':False}]
-        else:
-            emb = self.bot.cogs["EmbedCog"].Embed(title="Liste des personnages",color=self.embed_color,fields=[]).update_timestamp().create_footer(ctx.author)
+            emo = ':white_check_mark:' if name in deck else ':x:'
+            # Embed field
+            emb.fields = [{'name':name, 'value': await self.bot._(ctx, "player.field", classe=x['Class'], att1=x['Attaque 1'], att2=x['Attaque 2'], att3=x['Ultime'], passiv=x['Passif'], price=price, got_emoji=emo, got=get), 'inline':False}]
+        elif name is None:
+            t = await self.bot._(ctx, "player.listtitle")
+            emb = self.bot.cogs["EmbedCog"].Embed(title=t, color=self.embed_color, fields=[]).update_timestamp().create_footer(ctx.author)
             data = [x for x in sorted(list(data.keys())) if data[x]['actif']]
             nbr = len(data)
             for i in range(0, nbr, 10):
@@ -108,6 +119,9 @@ class Commands(commands.Cog):
                     else:
                         l.append(x)
                 emb.fields.append({'name':"{}-{}".format(i+1,i+10 if i+10<nbr else nbr), 'value':"\n".join(l), 'inline':True})
+        else:
+            await ctx.send(await self.bot._(ctx, "player.invalidperson"))
+            return
         await ctx.send(embed=emb.discord_embed())
 
 
@@ -121,10 +135,11 @@ class Commands(commands.Cog):
         """Commencer la partie, avec 5 personnages aléatoires"""
         deck = await ctx.bot.cogs['UsersCog'].get_user_deck(ctx.author.id)
         if len(deck)>0:
-            return await ctx.send("Vous avez déjà des personnages !")
-        await ctx.send("Bienvenue {} dans l'aventure !\nPour que vous commenciez avec de bonnes bases, nous vous avons donné au hasard 5 personnages.".format(ctx.author.mention))
+            await ctx.send(await self.bot._(ctx, "start.already"))
+            return
+        await ctx.send(await self.bot._(ctx, "start.welcome", user=ctx.author.mention))
         l = await ctx.bot.cogs["UsersCog"].select_starterKit(ctx.author)
-        await ctx.send("Ces personnages sont {}.\nVous pouvez entrer `/deck` pour voir la liste de vos personnages, et `/help` pour la liste des commandes disponibles. Bonne chance !".format(", ".join(l)))
+        await ctx.send(await self.bot._(ctx, "start.persons", people=", ".join(l)))
         
 
 def setup(bot):
