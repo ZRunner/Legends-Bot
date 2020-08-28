@@ -94,7 +94,7 @@ class CombatCog(commands.Cog):
                 play1_players = [x for x in play1_deck.values()]
             else:
                 play1_players = await self.select_team(ctx.author,ctx.channel,play1_deck)
-                if len(play1_players)==0:
+                if len(play1_players) == 0:
                     self.in_combat.remove(ctx.author)
                     self.in_combat.remove(user)
                     return
@@ -102,14 +102,14 @@ class CombatCog(commands.Cog):
                 play2_players = [x for x in play2_deck.values()]
             else:
                 play2_players = await self.select_team(user,ctx.channel,play2_deck)
-                if len(play2_players)==0:
+                if len(play2_players) == 0:
                     self.in_combat.remove(ctx.author)
                     self.in_combat.remove(user)
                     return
             # Création de l'équipe 1
             l = list()
             PCog = self.bot.cogs['PersosCog'].data
-            if len(PCog)==0:
+            if len(PCog) == 0:
                 PCog = await self.bot.cogs['PersosCog'].get_data()
             for p in play1_players:
                 data = PCog[p['personnage']]
@@ -166,24 +166,28 @@ class CombatCog(commands.Cog):
         except Exception as e:
             raise e
     
-    async def do_attack(self,action:list,perso:Perso):
+    async def do_attack(self, action:list, perso:Perso):
         """Exécute une action"""
-        if action[0]=='pass':
+        did_something = False
+        if action=='pass':
             result = '{} passe son tour 🏃'.format(perso.name)
-        elif action[0]=='frozen':
+        elif action=='frozen':
             result = '{} est immobilisé, il ne peut rien faire :snowflake:'.format(perso.name)
-        elif action[0]=='dead':
+        elif action=='dead':
             result = '{} est mort, il ne peut rien faire'.format(perso.name)
         else:
-            result = await self.bot.cogs['AttacksCog'][action[0]](perso)
-        return result
+            result = await self.bot.cogs['AttacksCog'][action](perso)
+            did_something = True
+        return result, did_something
 
-    async def make_tours(self,ctx:commands.Context,Team1:Team,Team2:Team,tours:int):
+    async def make_tours(self, ctx:commands.Context, Team1:Team, Team2:Team, tours:int):
         """Fait passer un tour"""
         # Préparation de l'embed
         title = "Combat : {} contre {}".format(Team1.user.display_name,Team2.user.display_name)
         emb = self.bot.cogs['EmbedCog'].Embed(title=title,desc="*Réagissez à ce message pour effectuer une action*",color=self.bot.cogs['Commands'].embed_color,fields=[{'name':'Historique','value':'Début du combat'},{'name':'Equipe 1','value':'None'},{'name':'Equipe 2','value':'None'},{'name':"Action...",'value':'loading...'}])
         msg = None
+        need_update = True
+        can_del_reactions = ctx.channel.permissions_for(ctx.guild.me).manage_messages
         # Mélange des personnages
         random.shuffle(Team1.players)
         random.shuffle(Team2.players)
@@ -192,17 +196,27 @@ class CombatCog(commands.Cog):
             if isinstance(tours, int):
                 return Team2.rounds > tours
             return any([x.life[0] > 0 for x in Team1.players]) and any([x.life[0] > 0 for x in Team2.players])
+        
+        async def send_embed(msg, emb, need_update):
+            if need_update or msg is None or not can_del_reactions:
+                if msg:
+                    await msg.delete()
+                return await ctx.send(embed=emb)
+            else:
+                await msg.edit(embed=emb)
+                return msg
 
         while check_cond():
             if not (Team1.user in self.in_combat or Team2.user in self.in_combat):
                 break
 
             await self.update_status(emb,Team1,Team2)
-            if msg != None:
-                await msg.delete()
-            msg = await ctx.send(embed=emb.discord_embed())
+            # if msg != None:
+            #     await msg.delete()
+            # msg = await ctx.send(embed=emb.discord_embed())
+            msg = await send_embed(msg, emb, need_update)
             perso = Team1.players[Team1.nbr]
-            result = await self.do_attack(await self.ask_action(msg,emb,perso,Team1.user), perso)
+            result, need_update = await self.do_attack(await self.ask_action(msg,emb,perso,Team1.user), perso)
             await ctx.send(result)
             if "passe son tour" in result:
                 perso.points += 2
@@ -219,10 +233,11 @@ class CombatCog(commands.Cog):
                 break
 
             await self.update_status(emb,Team1,Team2)
-            await msg.delete()
-            msg = await ctx.send(embed=emb.discord_embed())
+            # await msg.delete()
+            # msg = await ctx.send(embed=emb.discord_embed())
+            msg = await send_embed(msg, emb, need_update)
             perso = Team2.players[Team2.nbr]
-            result = await self.do_attack(await self.ask_action(msg,emb,perso,Team2.user), perso)
+            result, need_update = await self.do_attack(await self.ask_action(msg,emb,perso,Team2.user), perso)
             await ctx.send(result)
             if "passe son tour" in result:
                 perso.points += 2
@@ -237,9 +252,10 @@ class CombatCog(commands.Cog):
 
         await self.update_status(emb,Team1,Team2)
         del emb.fields[3]
-        if msg != None:
-            await msg.delete()
-        msg = await ctx.send(embed=emb.discord_embed())
+        # if msg != None:
+        #     await msg.delete()
+        # msg = await ctx.send(embed=emb)
+        await send_embed(msg, emb, True)
 
 
     async def add_history(self,emb,text):
@@ -252,7 +268,7 @@ class CombatCog(commands.Cog):
 
     async def create_perso_status(self,p:Perso,emojis:dict):
         life = round(p.life[0], None if p.life[0]==int(p.life[0]) else 1)
-        if life==0:
+        if life == 0:
             return '{} ({}) : {} K.O.'.format(p.name,p.classe,emojis['ko'])
         text = '{} ({}) : {} {}/{}'.format(p.name,p.classe,emojis['life'],life,p.life[1])
         text += '{}**|** Energie : {}'.format(emojis['none'],p.points)
@@ -295,48 +311,51 @@ class CombatCog(commands.Cog):
             text += "\n"+await self.create_perso_status(p,emojis_map)
         emb.fields[2]['value'] = text[:1024]
 
-    async def ask_action(self,msg,emb,perso,player):
+    async def ask_action(self, msg, emb, perso, player):
         """Demande à un joueur de choisir une action"""
-        if perso.frozen>0:
+        if perso.frozen > 0:
             perso.frozen -= 1
-            return ('frozen',perso)
-        if perso.life[0]==0:
-            return ('dead',perso)
+            return 'frozen'
+        if perso.life[0] == 0:
+            return 'dead'
         attaques = str()
         emojis = list()
         attaques_emojis = [await self.bot.cogs['UtilitiesCog'].get_emoji('attaque1'), await self.bot.cogs['UtilitiesCog'].get_emoji('attaque2'), await self.bot.cogs['UtilitiesCog'].get_emoji('ultime')]
         if True:
             emojis.append(attaques_emojis[0])
-            attaques += "{}  {}\n".format(emojis[-1],perso.attaque1)
+            attaques += "{}  {}\n".format(emojis[-1], perso.attaque1)
         if perso.points >= self.costs['attaque2']:
             emojis.append(attaques_emojis[1])
-            attaques += "{}  {}\n".format(emojis[-1],perso.attaque2)
+            attaques += "{}  {}\n".format(emojis[-1], perso.attaque2)
         if perso.points >= self.costs['ultime']:
             emojis.append(attaques_emojis[2])
-            attaques += "{}  {}\n".format(emojis[-1],perso.ultime)
+            attaques += "{}  {}\n".format(emojis[-1], perso.ultime)
         if True:
             emojis.append('🏃')
             attaques += '🏃 Passer le tour'
         emb.fields[3] = {'name':"**{}**, choisissez l'action de {}".format(player.display_name,perso.name),'value':attaques,'inline':False}
-        await msg.edit(embed=emb.discord_embed())
+        await msg.edit(embed=emb)
         for x in emojis:
             await msg.add_reaction(x)
         
         def check(reaction,user):
             return reaction.emoji in emojis and user==player
+
         try:
             reaction, _ = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
         except asyncio.TimeoutError:
-            reaction = ('pass',perso)
+            reaction = 'pass'
         else:
-            if reaction.emoji==attaques_emojis[0]:
-                reaction = (perso.attaque1,perso)
-            elif reaction.emoji==attaques_emojis[1]:
-                reaction = (perso.attaque2,perso)
-            elif reaction.emoji==attaques_emojis[2]:
-                reaction = (perso.ultime,perso)
+            if reaction.emoji == attaques_emojis[0]:
+                reaction = perso.attaque1
+            elif reaction.emoji == attaques_emojis[1]:
+                reaction = perso.attaque2
+                perso.points -= self.costs['attaque2']
+            elif reaction.emoji == attaques_emojis[2]:
+                reaction = perso.ultime
+                perso.points -= self.costs['ultime']
             else:
-                reaction = ('pass',perso)
+                reaction = 'pass'
         return reaction
 
 
