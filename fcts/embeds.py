@@ -61,7 +61,7 @@ class EmbedCog(commands.Cog):
                 emb["url"] = self.url
             if self.color != 0:
                 emb["color"] = self.color
-            if str(self.timestamp) != "":
+            if self.timestamp != discord.Embed.Empty:
                 emb["timestamp"] = str(self.timestamp)
             if self.footer_text != "" and self.footer_url != "":
                 emb["footer"] = {"icon_url": self.footer_url,
@@ -86,6 +86,9 @@ class EmbedCog(commands.Cog):
             if self.content != "":
                 j["content"] = self.content
             return j
+        
+        def to_dict(self):
+            return self.json()['embed']
 
         def set_author(self, user):
             self.author_name = user.name
