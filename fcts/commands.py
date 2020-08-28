@@ -149,7 +149,7 @@ class Commands(commands.Cog):
             return
         await ctx.send(await self.bot._(ctx, "start.welcome", user=ctx.author.mention))
         l = await ctx.bot.cogs["UsersCog"].select_starterKit(ctx.author)
-        await ctx.send(await self.bot._(ctx, "start.persons", people=", ".join(l)))
+        await ctx.send(await self.bot._(ctx, "start.persons", people=", ".join(l), p=ctx.prefix))
 
 
 def setup(bot):
