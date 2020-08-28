@@ -1,57 +1,8 @@
 from discord.ext import commands
-import discord, asyncio, random
-
-class Team:
-    def __init__(self,players=[],user=None,rounds=0):
-        self.user = user
-        self.players = players
-        self.rounds = rounds
-        self._nbr = 0
-    
-    @property
-    def nbr(self) -> int:
-        if self._nbr >= len(self.players):
-            self._nbr = 0
-        self._nbr += 1
-        return self._nbr-1
-    
-    def __str__(self):
-        return '<Team  user="{}"  players=[{}]  rounds={}>'.format(self.user,", ".join([str(x) for x in self.players]),self.rounds)
-    
-    def __len__(self):
-        return len(self.players)
-
-class Perso:
-    def __init__(self,name,classe,lvl,at1,at2,ult,pas,life,esquive,Type,passifType):
-        self.name = name
-        self.classe = classe
-        self.lvl = lvl
-        self.attaque1 = at1
-        self.attaque2 = at2
-        self.ultime = ult
-        self.passif = pas
-        self.xp = 0
-        self.points = random.randint(0,5)
-        self.life = [life,life] # [actuel, max]
-        self.effects = dict() # {nom: [coroutine,tours]}
-        self.frozen = 0
-        self.shield = 0
-        self.invisible = 0
-        self.critical = 10
-        self.attack_bonus = 0 # par unité
-        self.initialized = False
-        self.esquive = esquive # donner/enlever 20-40 à chaque fois
-        self.thorny = False
-        self.type = Type
-        self.provocation_coef = 1
-        self.attack_bonus_type = dict() # {type : boost} pour les boosts contre un type de perso particulier
-        self.passifType = passifType
-        self.Team1 = None # sa propre équipe
-        self.Team2 = None # équipe adverse
-    
-    def __str__(self):
-        return '<Perso  name="{}"  classe="{}"  lvl={}  xp={}>'.format(self.name,self.classe,self.lvl,self.xp)
-
+import discord
+import asyncio
+import random
+from fcts.classes import Team, Perso
 
 
 class CombatCog(commands.Cog):
@@ -162,17 +113,19 @@ class CombatCog(commands.Cog):
                 PCog = await self.bot.cogs['PersosCog'].get_data()
             for p in play1_players:
                 data = PCog[p['personnage']]
-                life = await self.bot.cogs['PersosCog'].calc_life(data,p['level'])
+                lvl = await self.bot.get_cog("UtilitiesCog").calc_level(p['xp'])
+                life = await self.bot.cogs['PersosCog'].calc_life(data, lvl)
                 esq = (await self.bot.cogs['ClassesCog'].get_class(data['Class']))['Escape']
-                l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=p['level'],at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,esquive=esq,Type=data['Type'],passifType=data['type_passif']))
+                l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=lvl,at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,esquive=esq,Type=data['Type'],passifType=data['type_passif']))
             Team1 = Team(user=ctx.author,players=l)
             # Création de l'équipe 2
             l = list()
             for p in play2_players:
                 data = PCog[p['personnage']]
-                life = await self.bot.cogs['PersosCog'].calc_life(data,p['level'])
+                lvl = await self.bot.get_cog("UtilitiesCog").calc_level(p['xp'])
+                life = await self.bot.cogs['PersosCog'].calc_life(data,lvl)
                 esq = (await self.bot.cogs['ClassesCog'].get_class(data['Class']))['Escape']
-                l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=p['level'],at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,esquive=esq,Type=data['Type'],passifType=data['type_passif']))
+                l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=lvl,at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,esquive=esq,Type=data['Type'],passifType=data['type_passif']))
             Team2 = Team(user=user,players=l)
             # Référencement des équipes l'une dans l'autre
             for p in Team1.players:
@@ -206,7 +159,8 @@ class CombatCog(commands.Cog):
     async def apply_one_passif(self,perso):
         """Ajoute le passif d'un perso"""
         try:
-            await self.bot.cogs['EffectsCog'].effects[perso.passif](perso)
+            # await self.bot.cogs['EffectsCog'].effects[perso.passif](perso)
+            pass
         except KeyError:
             pass
         except Exception as e:
@@ -217,11 +171,11 @@ class CombatCog(commands.Cog):
         if action[0]=='pass':
             result = '{} passe son tour 🏃'.format(perso.name)
         elif action[0]=='frozen':
-            result = '{} est immobilisé, il ne peut rien faire'.format(perso.name)
+            result = '{} est immobilisé, il ne peut rien faire :snowflake:'.format(perso.name)
         elif action[0]=='dead':
             result = '{} est mort, il ne peut rien faire'.format(perso.name)
         else:
-            result = await self.bot.cogs['AttacksCog'].attacks[action[0]](perso)
+            result = await self.bot.cogs['AttacksCog'][action[0]](perso)
         return result
 
     async def make_tours(self,ctx:commands.Context,Team1:Team,Team2:Team,tours:int):
@@ -255,7 +209,7 @@ class CombatCog(commands.Cog):
             else:
                 perso.points += 1
             await self.add_history(emb,result)
-            Team1, Team2 = await self.apply_effects(Team1,Team2)
+            await self.apply_effects(Team1)
             for p in Team2.players:
                 p.thorny = False
             
@@ -275,7 +229,7 @@ class CombatCog(commands.Cog):
             else:
                 perso.points += 1
             await self.add_history(emb,result)
-            Team2, Team1 = await self.apply_effects(Team2,Team1)
+            await self.apply_effects(Team2)
             for p in Team1.players:
                 p.thorny = False
             
@@ -301,23 +255,22 @@ class CombatCog(commands.Cog):
         if life==0:
             return '{} ({}) : {} K.O.'.format(p.name,p.classe,emojis['ko'])
         text = '{} ({}) : {} {}/{}'.format(p.name,p.classe,emojis['life'],life,p.life[1])
-        if "_on_fire" in p.effects.keys() and p.effects['_on_fire'][1]>0:
-            text += '{}**|** :fire: {}'.format(emojis['none'],p.effects['_on_fire'][1])
-        if "_on_bleeding" in p.effects.keys() and p.effects['_on_bleeding'][1]>0:
-            text += '{}**|** {}: {}'.format(emojis['none'],emojis['blood'],p.effects['_on_bleeding'][1])
-        if "_on_poison" in p.effects.keys() and p.effects['_on_poison'][1]>0:
-            text += '{}**|** {}: {}'.format(emojis['none'],emojis['poison'],p.effects['_on_poison'][1])
         text += '{}**|** Energie : {}'.format(emojis['none'],p.points)
+        other_effects = list()
+        for e in p.effects.array:
+            if e.emoji:
+                text += '{}**|** {} {}'.format(emojis['none'], e.emoji, e.duration)
+            else:
+                other_effects.append(e.name)
         if p.shield > 0:
-            text += "{}**|**  {} {}".format(emojis['none'],'🛡',p.shield)
+            text += "{}**|** {} {}".format(emojis['none'],'🛡',p.shield)
         if p.invisible > 0:
-            text += "{}**|**  {} {}".format(emojis['none'],emojis['invisible'],p.invisible)
+            text += "{}**|** {} {}".format(emojis['none'],emojis['invisible'],p.invisible)
         if p.frozen > 0:
-            text += "{}**|**  {} {}".format(emojis['none'],':snowflake:',p.frozen)
+            text += "{}**|** {} {}".format(emojis['none'],':snowflake:',p.frozen)
         used_effects = ('on_fire', 'on_bleeding','on_poison')
-        other_effects = [x[0].__doc__ for x in p.effects.values() if (x[0].__name__ not in used_effects) and x[1]>0]
         if len(other_effects)>0:
-            text += "{}**|**  {} {}".format(emojis['none'],emojis['effect'],' '.join(other_effects))
+            text += "{}**|** {} {}".format(emojis['none'], emojis['effect'], ' '.join(other_effects))
         return text
 
     async def update_status(self,emb,Team1,Team2):
@@ -387,19 +340,12 @@ class CombatCog(commands.Cog):
         return reaction
 
 
-    async def apply_effects(self,Team1,Team2):
+    async def apply_effects(self,Team1):
         """Applique les effets sur un perso (feu,regen etc)"""
         for player in Team1.players:
-            for name, conf in player.effects.items():
-                try:
-                    if conf[1] == 0:
-                        continue
-                    await conf[0](player)
-                    player.effects[name][1] -= 1
-                except Exception as e:
-                    await self.bot.cogs['ErrorsCog'].on_error(e,None)
-            player.invisible = max(player.invisible-1,0)
-        return Team1, Team2
+            await player.effects.execute(player, 'end_turn')
+            player.effects.clean()
+            player.invisible = max(player.invisible-1, 0)
 
 
 def setup(bot):

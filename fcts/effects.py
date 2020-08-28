@@ -1,5 +1,6 @@
 from discord.ext import commands
 from math import log
+from fcts.classes import Perso, Effect
 
 class EffectsCog(commands.Cog):
     def __init__(self,bot):
@@ -7,63 +8,76 @@ class EffectsCog(commands.Cog):
         self.file = 'effects'
         self.fire_immunes = ['Dohvakiin']
         self.poison_immunes = ['Xénomorphe']
-        self.effects = {'_on_fire':self.on_fire,
-            '_on_poison':self.on_poison,
-            '_on_bleeding':self.on_bleeding,
-            'Guerrier imbattable':self.p_1,
-            'Pistolet à portails':self.p_2,
-            'Espiègle et rusé':self.p_3,
-            'Combattant de boss':self.p_4,
-            'Discrétion surnaturelle':self.p_5,
-            'Alien amélioré':self.p_6,
-            'Danger silencieux':self.p_8,
-            'Tchoa':self.p_10,
-            'Terreur nocturne':self.p_11,
-            'Don de champignons':self.p_12,
+        self.effects = {'regen': self.regen,
+            'blessing': self.blessing,
+            'fire': self.fire,
+            'poison':self.poison,
+            'bleeding':self.bleeding,
+            # 'Guerrier imbattable':self.p_1,
+            # 'Pistolet à portails':self.p_2,
+            # 'Espiègle et rusé':self.p_3,
+            # 'Combattant de boss':self.p_4,
+            # 'Discrétion surnaturelle':self.p_5,
+            # 'Alien amélioré':self.p_6,
+            # 'Danger silencieux':self.p_8,
+            # 'Tchoa':self.p_10,
+            # 'Terreur nocturne':self.p_11,
+            # 'Don de champignons':self.p_12,
             }
     
 
-    async def add_effects(self,perso,nom:str,tours:int):
+    async def add_effects(self, perso:Perso, nom:str, duration:int):
         if nom=='_on_fire' and perso.name in self.fire_immunes:
             return perso
         if nom=='_on_poison' and perso.name in self.poison_immunes:
             return perso
-        if self.effects[nom] in perso.effects.keys():
-            perso.effects[nom][1] = max(perso.effects[nom][1],tours)
-        else:
-            perso.effects[nom] = [self.effects[nom], tours]
+        if nom in self.effects:
+            perso.effects.add(self.effects[nom](duration))
 
+    class regen(Effect):
+        def __init__(self, duration=1):
+            super().__init__("regen", "❤️", duration, True)
 
-    async def regen(self,persos:list):
-        for p in persos:
-            p.life[0] = min(p.life[1], p.life[0]+p.life[1]*0.15)
+        async def execute(self, perso: Perso):
+            perso.life[0] = min(perso.life[1], perso.life[0]+perso.life[1]*0.15)
     
-    async def blessing(self,persos:list):
-        for p in persos:
-            p.frozen = 0
-            for i in ['_on_fire','_on_poison','_on_bleeding']:
-                p.effects.pop(i,None)
+    class blessing(Effect):
+        def __init__(self, duration=1):
+            super().__init__("blessing", "✨", duration, True)
 
-    async def on_fire(self,perso):
-        """On Fire!"""
-        lvl = perso.lvl
-        perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
-        if perso.life[0] < 0:
-            perso.life[0] = 0
+        async def execute(self, perso: Perso):
+            perso.frozen = 0
+            perso.effects.array = [x for x in perso.effects.array if x.positive]
+
+    class fire(Effect):
+        def __init__(self, duration=1):
+            super().__init__("fire", "🔥", duration)
+        
+        async def execute(self, perso: Perso):
+            lvl = perso.lvl
+            perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
+            if perso.life[0] < 0:
+                perso.life[0] = 0
     
-    async def on_poison(self,perso):
-        """Poison"""
-        lvl = perso.lvl
-        perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
-        if perso.life[0] < 0:
-            perso.life[0] = 0
+    class poison(Effect):
+        def __init__(self, duration=1):
+            super().__init__("poison", "🤢", duration)
+
+        async def execute(self, perso: Perso):
+            lvl = perso.lvl
+            perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
+            if perso.life[0] < 0:
+                perso.life[0] = 0
     
-    async def on_bleeding(self,perso):
-        """Saignement"""
-        lvl = perso.lvl
-        perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
-        if perso.life[0] < 0:
-            perso.life[0] = 0
+    class bleeding(Effect):
+        def __init__(self, duration=1):
+            super().__init__("bleeding", "🩸", duration)
+
+        async def execute(self, perso: Perso):
+            lvl = perso.lvl
+            perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
+            if perso.life[0] < 0:
+                perso.life[0] = 0
 
 
 
