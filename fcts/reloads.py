@@ -50,7 +50,7 @@ class ReloadsCog(commands.Cog):
                 await errors_cog.on_error(e, ctx)
                 await ctx.send(f'**`ERREUR:`** {type(e).__name__} - {e}')
             else:
-                await self.bot.cogs["UtilitiesCog"].print2("Module {} rechargé".format(cog))
+                print("Module {} rechargé".format(cog))
                 reloaded_cogs.append(cog)
                 self.bot.log.debug("Module {} rechargé".format(cog))
         await ctx.bot.cogs['UtilitiesCog'].count_lines_code()

@@ -42,14 +42,6 @@ class AdminCog(commands.Cog):
         self.bot = bot
         self.file = "admin"
         self._last_result = None
-        try:
-            self.print = self.bot.cogs["UtilitiesCog"].print2
-        except:
-            pass
-    
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.print = self.bot.cogs["UtilitiesCog"].print2
 
     async def check_if_admin(self,ctx):
         return await reloads.check_admin(ctx)
@@ -264,7 +256,7 @@ class AdminCog(commands.Cog):
     async def backup_auto(self,ctx=None):
         """Crée une backup du code"""
         t = time.time()
-        await self.print("("+str(await self.bot.cogs['TimeCog'].date(datetime.datetime.now(),digital=True))+") Backup auto en cours")
+        print("("+str(await self.bot.cogs['TimeCog'].date(datetime.datetime.now(),digital=True))+") Backup auto en cours")
         message = await ctx.send(":hourglass: Sauvegarde en cours...")
         try:
             os.remove('../backup.tar')
@@ -273,7 +265,7 @@ class AdminCog(commands.Cog):
         try:
             archive = shutil.make_archive('backup','tar','..')
         except FileNotFoundError:
-            await self.print("Impossible de trouver le dossier de sauvegarde")
+            print("Impossible de trouver le dossier de sauvegarde")
             await message.edit("<:red_cross:447509074771312652> Impossible de trouver le dossier de sauvegarde")
             return
         try:
@@ -285,8 +277,7 @@ class AdminCog(commands.Cog):
             os.remove('backup.tar')
         except:
             pass
-        msg = ":white_check_mark: Sauvegarde terminée en {} secondes !".format(round(time.time()-t,3))
-        await self.print(msg)
+        print(":white_check_mark: Sauvegarde terminée en {} secondes !".format(round(time.time()-t,3)))
         if ctx != None:
             await message.edit(content=msg)
             
