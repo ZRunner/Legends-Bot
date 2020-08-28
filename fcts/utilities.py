@@ -111,6 +111,9 @@ class UtilitiesCog(commands.Cog):
             await self.bot.cogs['ErrorsCog'].on_error(e,None)
         self.codelines = count
         return count
+    
+    async def calc_level(self, xp: int) -> int:
+        return 1 if xp == 0 else xp
 
 def setup(bot):
     bot.add_cog(UtilitiesCog(bot))

@@ -80,9 +80,10 @@ class Commands(commands.Cog):
                 await ctx.send(await self.bot._(ctx, "player.nopeople2", user=user))
             return
         text = list()
-        lvl = await self.bot._(ctx, "player.level")
-        for x in sorted(d.values(), key=lambda k: k['level'], reverse=True):
-            text.append("{} ({} {})".format(x['personnage'], lvl, x['level']))
+        lvl_txt = await self.bot._(ctx, "player.level")
+        for x in sorted(d.values(), key=lambda k: k['xp'], reverse=True):
+            lvl = await self.bot.get_cog("UtilitiesCog").calc_level(x['xp'])
+            text.append("{} ({} {})".format(x['personnage'], lvl_txt, lvl))
         t = await self.bot._(ctx, "player.decktitle", user=user)
         emb = self.bot.cogs["EmbedCog"].Embed(title=t, desc="\n".join(
             text), color=self.embed_color, fields=[]).update_timestamp().create_footer(ctx.author)
