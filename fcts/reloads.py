@@ -1,8 +1,11 @@
-import importlib, sys
+import importlib
+import sys
 from discord.ext import commands
 
-admins_id = [279568324260528128,375598088850505728,281404141841022976,552273019020771358]
+admins_id = [279568324260528128, 375598088850505728,
+             281404141841022976, 552273019020771358]
 #Z_runner - Aragorn - reddemoon - Z_Jumper
+
 
 async def check_admin(ctx):
     if type(ctx) == commands.Context:
@@ -18,13 +21,13 @@ async def check_admin(ctx):
 
 class ReloadsCog(commands.Cog):
 
-    def __init__(self,bot):
+    def __init__(self, bot):
         self.bot = bot
         self.file = "reloads"
-    
-    async def reload_cogs(self,ctx,cogs):
+
+    async def reload_cogs(self, ctx, cogs):
         errors_cog = self.bot.cogs["ErrorsCog"]
-        if len(cogs)==1 and cogs[0]=='all':
+        if len(cogs) == 1 and cogs[0] == 'all':
             cogs = sorted([x.file for x in self.bot.cogs.values()])
         reloaded_cogs = list()
         for cog in cogs:
@@ -44,19 +47,19 @@ class ReloadsCog(commands.Cog):
             except ModuleNotFoundError:
                 await ctx.send("Le module {} est introuvable".format(cog))
             except Exception as e:
-                await errors_cog.on_error(e,ctx)
+                await errors_cog.on_error(e, ctx)
                 await ctx.send(f'**`ERREUR:`** {type(e).__name__} - {e}')
             else:
                 await self.bot.cogs["UtilitiesCog"].print2("Module {} rechargé".format(cog))
                 reloaded_cogs.append(cog)
                 self.bot.log.debug("Module {} rechargé".format(cog))
         await ctx.bot.cogs['UtilitiesCog'].count_lines_code()
-        if len(reloaded_cogs)>0:
+        if len(reloaded_cogs) > 0:
             await ctx.send("Ces modules ont été correctement rechargés : {}".format(", ".join(reloaded_cogs)))
 
     @commands.command(name="add_cog")
     @commands.check(check_admin)
-    async def add_cog(self,ctx,name):
+    async def add_cog(self, ctx, name):
         """Ajouter un cog au bot"""
         if not ctx.author.id in admins_id:
             return
@@ -66,9 +69,9 @@ class ReloadsCog(commands.Cog):
         except Exception as e:
             await ctx.send(str(e))
 
-    @commands.command(name="del_cog",aliases=['remove_cog'])
+    @commands.command(name="del_cog", aliases=['remove_cog'])
     @commands.check(check_admin)
-    async def rm_cog(self,ctx,name):
+    async def rm_cog(self, ctx, name):
         """Enlever un cog au bot"""
         if not ctx.author.id in admins_id:
             return
