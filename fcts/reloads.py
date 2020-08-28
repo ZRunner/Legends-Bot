@@ -28,12 +28,19 @@ class ReloadsCog(commands.Cog):
             cogs = sorted([x.file for x in self.bot.cogs.values()])
         reloaded_cogs = list()
         for cog in cogs:
+            fcog = cog
             if not cog.startswith("fcts."):
-                fcog = "fcts."+cog
+                fcog = "fcts." + fcog
             try:
                 self.bot.reload_extension(fcog)
             except commands.errors.ExtensionNotLoaded:
-                await ctx.send("Le module {} n'a pas été chargé".format(cog))
+                try:
+                    fcog = importlib.import_module(cog)
+                    importlib.reload(fcog)
+                except:
+                    await ctx.send("Le module {} n'a pas été chargé".format(cog))
+                else:
+                    await ctx.send(f"La lib {cog} a été rechargée")
             except ModuleNotFoundError:
                 await ctx.send("Le module {} est introuvable".format(cog))
             except Exception as e:
