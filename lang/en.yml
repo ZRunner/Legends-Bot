@@ -38,6 +38,20 @@ en:
     subcmds_list: "Subcommands:"
   perms:
     manage_guild: manage server
+  player:
+    decktitle: Characters of the player %{user}
+    detailstitle: Character details
+    field: "Class : %{classe}\nBasic attack : %{att1}\nSkill : %{att2}\nUltimate skill : %{att3}\nPassive skill : %{passiv}\nCurrent price : %{price}\n\n%{got_emoji} Acquired : %{got}"
+    invalidperson: Unable to find this character
+    level: level
+    listtitle: Character list
+    nopeople1: You don't own any characters !
+    nopeople2: The player %{user} don't own any character !
+    notfound: Unable to find the player %{user} !
+  start:
+    already: You already have characters !
+    persons: "Those characters are %{people}.\nYou can enter `%{p}deck` to see the list of your characters, and `%{p}help` for the list of available commands. Good luck !"
+    welcome: "Welcome %{user} onto the adventure !\nTo get you started with good basics, we gave you 5 randoms characters."
   stats:
     general: "**Number of servers:** {}\n**Number of visible members:** {} ({} bots)\n**Number of code lines:** {}\n**Python version:** {}\n**Version of the `discord.py` lib:** {}\n**RAM usage:** {} GB\n**CPU usage:** {} %\n**API latency time:** {} ms"
     title: "Bot statistics"        
