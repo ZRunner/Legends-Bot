@@ -1,29 +1,33 @@
-import datetime, discord, requests
+import datetime
+import discord
+import requests
 from discord.ext import commands
+
 
 def getIfromRGB(rgb):
     red = rgb[0]
     green = rgb[1]
     blue = rgb[2]
-    RGBint = (red<<16) + (green<<8) + blue
+    RGBint = (red << 16) + (green << 8) + blue
     return RGBint
+
 
 class EmbedCog(commands.Cog):
     """Cog for the management of the embeds. No more, no less."""
 
-    def __init__(self,bot):
+    def __init__(self, bot):
         self.bot = bot
         self.logs = "https://discordapp.com/api/webhooks/513473320268726322/a4qc8NbVyymrhjZEvojRDiyniK67VLInWomMNrInTB-0_yh1Bko0rhx1rIUeSpTGWaFY"
         self.file = "embeds"
 
-
     class Embed:
-        def __init__(self,content="",title="",desc="",url="",color=0,time=discord.Embed.Empty,footer_url="",footer_text="",thumbnail="",image="",author_name="",author_url="",author_icon="",fields=[]):
+        def __init__(self, content="", title="", desc="", url="", color=0, time=discord.Embed.Empty, footer_url="", footer_text="", thumbnail="", image="", author_name="", author_url="", author_icon="", fields=[]):
             self.content = content
             self.title = title
             self.description = desc
             self.url = url
-            self.color = color if type(color)==int else getIfromRGB(color.to_rgb())
+            self.color = color if type(
+                color) == int else getIfromRGB(color.to_rgb())
             self.timestamp = time
             self.footer_text = footer_text
             self.footer_url = footer_url
@@ -40,7 +44,7 @@ class EmbedCog(commands.Cog):
                     x["name"] = "No name"
                 if "value" not in x.keys():
                     x["value"] = "No value"
-        
+
         def update_timestamp(self):
             self.timestamp = datetime.datetime.utcnow()
             return self
@@ -59,11 +63,12 @@ class EmbedCog(commands.Cog):
             if str(self.timestamp) != "":
                 emb["timestamp"] = str(self.timestamp)
             if self.footer_text != "" and self.footer_url != "":
-                emb["footer"] = {"icon_url":self.footer_url,"icon_text":self.footer_text}
+                emb["footer"] = {"icon_url": self.footer_url,
+                                 "icon_text": self.footer_text}
             if self.thumbnail != "":
-                emb["thumbnail"] = {"url":self.thumbnail}
+                emb["thumbnail"] = {"url": self.thumbnail}
             if self.image != "":
-                emb["image"]  = {"url":"self.image"}
+                emb["image"] = {"url": self.image}
             if self.author_icon != "" or self.author_name != "" or self.author_url != "":
                 auth = dict()
                 if self.author_name != "":
@@ -81,28 +86,30 @@ class EmbedCog(commands.Cog):
                 j["content"] = self.content
             return j
 
-        def set_author(self,user):
+        def set_author(self, user):
             self.author_name = user.name
             self.author_icon = user.avatar_url_as(format='png')
             return self
 
-        def create_footer(self,user):
+        def create_footer(self, user):
             self.footer_text = "Requested by "+user.name
             self.footer_url = user.avatar_url_as(format='png')
             return self
 
         def discord_embed(self):
-            emb = discord.Embed(title=self.title, colour=discord.Color(self.color), url=self.url, description=self.description, timestamp=self.timestamp)
+            emb = discord.Embed(title=self.title, colour=discord.Color(
+                self.color), url=self.url, description=self.description, timestamp=self.timestamp)
             emb.set_image(url=self.image)
             emb.set_thumbnail(url=self.thumbnail)
-            emb.set_author(name=self.author_name, url=self.author_url, icon_url=self.author_icon)
+            emb.set_author(name=self.author_name,
+                           url=self.author_url, icon_url=self.author_icon)
             emb.set_footer(text=self.footer_text, icon_url=self.footer_url)
             for x in self.fields:
-                emb.add_field(name=x["name"],value=x["value"],inline=x["inline"])
+                emb.add_field(name=x["name"],
+                              value=x["value"], inline=x["inline"])
             return emb
-    
 
-    async def send(self,embeds,url=None,ctx=None):
+    async def send(self, embeds, url=None, ctx=None):
         if url == None:
             url = self.logs
         liste = list()
@@ -111,7 +118,7 @@ class EmbedCog(commands.Cog):
                 liste.append(x.json()["embed"])
             else:
                 liste.append(x["embed"])
-        r = requests.post(url,json={"embeds":liste})
+        r = requests.post(url, json={"embeds": liste})
         if ctx != None:
             try:
                 msg = eval(r.text)
@@ -121,8 +128,7 @@ class EmbedCog(commands.Cog):
                     msg = msg["_misc"][0]
             except:
                 return
-            await ctx.send("`Erreur {}:` {}".format(r.status_code,msg))
-
+            await ctx.send("`Erreur {}:` {}".format(r.status_code, msg))
 
 
 def setup(bot):
