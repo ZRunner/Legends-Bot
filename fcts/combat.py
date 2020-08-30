@@ -186,6 +186,7 @@ class CombatCog(commands.Cog):
         title = "Combat : {} contre {}".format(Team1.user.display_name,Team2.user.display_name)
         emb = self.bot.cogs['EmbedCog'].Embed(title=title,desc="*Réagissez à ce message pour effectuer une action*",color=self.bot.cogs['Commands'].embed_color,fields=[{'name':'Historique','value':'Début du combat'},{'name':'Equipe 1','value':'None'},{'name':'Equipe 2','value':'None'},{'name':"Action...",'value':'loading...'}])
         msg = None
+        result = str()
         need_update = True
         can_del_reactions = ctx.channel.permissions_for(ctx.guild.me).manage_messages
         # Mélange des personnages
@@ -197,13 +198,16 @@ class CombatCog(commands.Cog):
                 return Team2.rounds > tours
             return any([x.life[0] > 0 for x in Team1.players]) and any([x.life[0] > 0 for x in Team2.players])
         
-        async def send_embed(msg, emb, need_update):
+        async def send_embed(msg:discord.Message, emb, sentence:str, need_update:bool):
             if need_update or msg is None or not can_del_reactions:
                 if msg:
                     await msg.delete()
+                if sentence:
+                    await ctx.send(sentence)
                 return await ctx.send(embed=emb)
             else:
                 await msg.edit(embed=emb)
+                await msg.clear_reactions()
                 return msg
 
         while check_cond():
@@ -214,10 +218,10 @@ class CombatCog(commands.Cog):
             # if msg != None:
             #     await msg.delete()
             # msg = await ctx.send(embed=emb.discord_embed())
-            msg = await send_embed(msg, emb, need_update)
+            msg = await send_embed(msg, emb, result, need_update)
             perso = Team1.players[Team1.nbr]
             result, need_update = await self.do_attack(await self.ask_action(msg,emb,perso,Team1.user), perso)
-            await ctx.send(result)
+            # await ctx.send(result)
             if "passe son tour" in result:
                 perso.points += 2
             else:
@@ -235,10 +239,10 @@ class CombatCog(commands.Cog):
             await self.update_status(emb,Team1,Team2)
             # await msg.delete()
             # msg = await ctx.send(embed=emb.discord_embed())
-            msg = await send_embed(msg, emb, need_update)
+            msg = await send_embed(msg, emb, result, need_update)
             perso = Team2.players[Team2.nbr]
             result, need_update = await self.do_attack(await self.ask_action(msg,emb,perso,Team2.user), perso)
-            await ctx.send(result)
+            # await ctx.send(result)
             if "passe son tour" in result:
                 perso.points += 2
             else:
@@ -255,7 +259,7 @@ class CombatCog(commands.Cog):
         # if msg != None:
         #     await msg.delete()
         # msg = await ctx.send(embed=emb)
-        await send_embed(msg, emb, True)
+        await send_embed(msg, emb, result, True)
 
 
     async def add_history(self,emb,text):
