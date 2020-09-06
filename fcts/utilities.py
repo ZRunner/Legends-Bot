@@ -26,7 +26,9 @@ class UtilitiesCog(commands.Cog):
                        'invisible': 639951219254624267,
                        'ko': 640312453103878165,
                        'bleed': 640580514012463141,
-                       'poison': 680872153872334849}
+                       'poison': 680872153872334849,
+                       'att_boost': 640580485415698452,
+                       'att_less': 640580460249874491}
         self.config = self.get_bot_infos()
 
     async def get_emoji(self, name):
