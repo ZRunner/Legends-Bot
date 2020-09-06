@@ -1,5 +1,6 @@
 from discord.ext import commands
 from math import log
+from inspect import signature
 from fcts.classes import Perso, Effect
 
 class EffectsCog(commands.Cog):
@@ -13,6 +14,8 @@ class EffectsCog(commands.Cog):
             'fire': self.fire,
             'poison':self.poison,
             'bleeding':self.bleeding,
+            'critical_bonus':self.critical,
+            'attack_bonus':self.attack
             # 'Guerrier imbattable':self.p_1,
             # 'Pistolet à portails':self.p_2,
             # 'Espiègle et rusé':self.p_3,
@@ -26,13 +29,15 @@ class EffectsCog(commands.Cog):
             }
     
 
-    async def add_effects(self, perso:Perso, nom:str, duration:int):
+    async def add_effect(self, perso:Perso, nom:str, duration:int, **kwargs):
         if nom=='_on_fire' and perso.name in self.fire_immunes:
             return perso
         if nom=='_on_poison' and perso.name in self.poison_immunes:
             return perso
         if nom in self.effects:
-            perso.effects.add(self.effects[nom](duration))
+            sign = signature(self.effects[nom])
+            kwargs = {k:v for k,v in kwargs.items() if k in sign.parameters}
+            perso.effects.add(self.effects[nom](duration, **kwargs))
 
     class regen(Effect):
         def __init__(self, duration=1):
@@ -40,7 +45,7 @@ class EffectsCog(commands.Cog):
 
         async def execute(self, perso: Perso):
             perso.life[0] = min(perso.life[1], perso.life[0]+perso.life[1]*0.15)
-    
+
     class blessing(Effect):
         def __init__(self, duration=1):
             super().__init__("blessing", "✨", duration, True)
@@ -68,7 +73,7 @@ class EffectsCog(commands.Cog):
             perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
             if perso.life[0] < 0:
                 perso.life[0] = 0
-    
+
     class bleeding(Effect):
         def __init__(self, duration=1):
             super().__init__("bleeding", "🩸", duration)
@@ -79,7 +84,24 @@ class EffectsCog(commands.Cog):
             if perso.life[0] < 0:
                 perso.life[0] = 0
 
-
+    class critical(Effect):
+        def __init__(self, duration=1, bonus=1):
+            super().__init__("critical_bonus", None, duration, positive=(bonus>0), event="after_attack")
+            self.value = bonus
+            self.fusion = False
+        
+        async def execute(self, perso: Perso):
+            return
+    
+    class attack(Effect):
+        def __init__(self, duration=1, bonus=1, _type=None):
+            super().__init__("attack_bonus", None, duration, positive=(bonus>0), event="after_attack")
+            self.value = bonus
+            self.type = _type
+            self.fusion = False
+        
+        async def execute(self, perso: Perso):
+            return
 
 
     async def p_1(self,perso):

@@ -55,6 +55,7 @@ class CombatCog(commands.Cog):
                         await channel.send("Vous devez sélectionner 5 personnages")
                         tries +=1
             await suppr(bot_msg)
+            await suppr(msg)
             return choice
         except Exception as e:
             await self.bot.cogs["ErrorsCog"].on_error(e,None)
@@ -169,6 +170,7 @@ class CombatCog(commands.Cog):
     async def do_attack(self, action:list, perso:Perso):
         """Exécute une action"""
         did_something = False
+        await perso.effects.execute(perso, 'before_attack')
         if action=='pass':
             result = '{} passe son tour 🏃'.format(perso.name)
         elif action=='frozen':
@@ -176,8 +178,9 @@ class CombatCog(commands.Cog):
         elif action=='dead':
             result = '{} est mort, il ne peut rien faire'.format(perso.name)
         else:
-            result = await self.bot.cogs['AttacksCog'][action](perso)
+            await perso.effects.execute(perso, 'after_attack')
             did_something = True
+        result = await self.bot.cogs['AttacksCog'][action](perso)
         return result, did_something
 
     async def make_tours(self, ctx:commands.Context, Team1:Team, Team2:Team, tours:int):
@@ -277,8 +280,14 @@ class CombatCog(commands.Cog):
         text = '{} ({}) : {} {}/{}'.format(p.name,p.classe,emojis['life'],life,p.life[1])
         text += '{}**|** Energie : {}'.format(emojis['none'],p.points)
         other_effects = list()
+        attack_bonus = 0
+        critic_bonus = 0
         for e in p.effects.array:
-            if e.emoji:
+            if e.name == "attack_bonus":
+                attack_bonus += e.value
+            elif e.name == "critic_bonus":
+                critic_bonus += e.value
+            elif e.emoji:
                 text += '{}**|** {} {}'.format(emojis['none'], e.emoji, e.duration)
             else:
                 other_effects.append(e.name)
@@ -288,7 +297,12 @@ class CombatCog(commands.Cog):
             text += "{}**|** {} {}".format(emojis['none'],emojis['invisible'],p.invisible)
         if p.frozen > 0:
             text += "{}**|** {} {}".format(emojis['none'],':snowflake:',p.frozen)
-        used_effects = ('on_fire', 'on_bleeding','on_poison')
+        if attack_bonus > 0:
+            text += "{}**|** {} {}".format(emojis['none'],emojis['att_boost'],attack_bonus)
+        elif attack_bonus < 0:
+            text += "{}**|** {} {}".format(emojis['none'],emojis['att_less'],attack_bonus)
+        if critic_bonus != 0:
+            text += "{}**|** {} {}".format(emojis['none'],':anger:',critic_bonus)
         if len(other_effects)>0:
             text += "{}**|** {} {}".format(emojis['none'], emojis['effect'], ' '.join(other_effects))
         return text
@@ -302,9 +316,11 @@ class CombatCog(commands.Cog):
         invisible_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('invisible'))
         blood_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('bleed'))
         poison_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('poison'))
+        att_boost = str(await self.bot.cogs['UtilitiesCog'].get_emoji('att_boost'))
+        att_less = str(await self.bot.cogs['UtilitiesCog'].get_emoji('att_less'))
         emb.fields[1]['name'] = "Equipe de "+Team1.user.display_name
         text = ""
-        emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji,'poison':poison_emoji}
+        emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji,'poison':poison_emoji, 'att_boost':att_boost, 'att_less':att_less}
         for p in Team1.players:
             text += "\n"+await self.create_perso_status(p,emojis_map)
         emb.fields[1]['value'] = text[:1024]

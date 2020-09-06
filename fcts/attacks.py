@@ -60,8 +60,8 @@ class AttacksCog(commands.Cog):
             return "Attaque non codée"
         return t
     
-    async def add_effects(self, *args, **kwargs):
-       await self.bot.cogs['EffectsCog'].add_effects(*args, **kwargs)
+    async def add_effect(self, *args, **kwargs):
+       await self.bot.cogs['EffectsCog'].add_effect(*args, **kwargs)
 
     async def merge_names(self,names:list) -> str:
         if len(names) == 0:
@@ -106,9 +106,8 @@ class AttacksCog(commands.Cog):
             await self.bot.cogs['CombatCog'].apply_one_passif(perso)
         if random.randrange(100) < perso.esquive and perso.frozen == 0:
             return 0
-        attack_boost = attacker.attack_bonus
-        if perso.type in attacker.attack_bonus_type.keys():
-            attack_boost += attacker.attack_bonus_type[perso.type]
+        attack_boost = attacker.attack_bonus(perso.type)
+        print(perso.name, attack_boost)
         if attacker.passifType == 'B':
             await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
         points += round(points * (attack_boost*0.25),1)
@@ -156,7 +155,7 @@ class AttacksCog(commands.Cog):
         IDs = list()
         possible_players = [x for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player]
         if len([1 for x in Team.players if x.life[0]<=0]) > 0:
-            print([(x.name, x.life) for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player])
+            # print([(x.name, x.life) for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player])
         if has_type!=None:
             possible_players = [x for x in possible_players if x.type==has_type]
         len_targets = min(len(possible_players),nbr)
@@ -208,7 +207,7 @@ class AttacksCog(commands.Cog):
         targets = await self.select_random_players(3,perso.Team2)
         for t in targets:
             await self.apply_dmg(t,22,perso,False)
-            await self.add_effects(t,'fire',2)
+            await self.add_effect(t,'fire',2)
             names.append(t.name)
         txt =  "Le ciel s'obscurcit avec l'apparition d'une planète. {p} lui fait envoyer un rayon destructeur sur {t}, ce qui leur inflige 22 PV de dégâts, et les enflamme !".format(p=perso.name,t = await self.merge_names(names))
         return txt
@@ -229,7 +228,7 @@ class AttacksCog(commands.Cog):
         targets = await self.select_random_players(3,perso.Team2)
         points = await self.apply_dmg(targets[0],22,perso)
         targets[1].frozen += 1
-        await self.add_effects(targets[2],'poison',1)
+        await self.add_effect(targets[2],'poison',1)
         txt = "{p} appelle une araignée géante, qui fait {d}PV de dégâts sur {t[0]}, immobilise {t[1]} et empoisonne {t[2]} ! ".format(p=perso.name,t=[x.name for x in targets],d=points)
         return txt
 
@@ -261,7 +260,8 @@ class AttacksCog(commands.Cog):
         "Bonus tactique"
         targets_attack = await self.select_random_players(3, perso.Team1, evil=False)
         for t in targets_attack:
-            t.attack_bonus += 1
+            # t.attack_bonus += 1
+            await self.add_effect(t, 'attack_bonus', 1, bonus=1)
         targets_shield = await self.select_random_players(2, perso.Team1, evil=False)
         for t in targets_shield:
             t.shield += 1
@@ -286,34 +286,36 @@ class AttacksCog(commands.Cog):
         elif points==0:
             txt += random.choice(self.escape)
         return txt
-    
+
     async def c_5(self,perso):
         "Cri destructeur"
         targets = await self.select_random_players(5,perso.Team2)
-        for e,p in enumerate(targets):
+        for e, p in enumerate(targets):
             if e<3:
-                p.attack_bonus -= 1
+                # p.attack_bonus -= 1
+                await self.add_effect(p, 'attack_bonus', 1, bonus=-1)
             else:
                 p.esquive -= 25
         return "{} utilise son cri contre l'équipe adverse, réduisant l'attaque de {}, et l'esquive de {}. ".format(perso.name, await self.merge_names(targets[:3]), await self.merge_names(targets[3:]))
-    
+
     async def u_5(self,perso):
         "Déferlante de magie"
         for t in await self.select_random_players(5,perso.Team2):
             await self.apply_dmg(t,20,perso)
         targets_fire = await self.select_random_players(2,perso.Team2)
         for t in targets_fire:
-            await self.add_effects(t,'fire',1)
+            await self.add_effect(t,'fire',1)
         target_poison = await self.select_random_players(1,perso.Team2)
         for t in target_poison:
-            await self.add_effects(t,'poison',1)
-        perso.attack_bonus += 1
+            await self.add_effect(t,'poison',1)
+        # perso.attack_bonus += 1
+        await self.add_effect(perso, 'attack_bonus', 1, bonus=1)
         gr = "s'enflamment" if len(targets_fire)>1 else "s'enflamme"
         txt = "{p} utilise sa magie contre l'équipe adverse, leur causant 20pv de dégâts. De plus {fire} {gr}".format(p=perso.name,fire = await self.merge_names(targets_fire),gr=gr)
         if len(target_poison)==1:
             txt += ", et {} est empoisonné".format(target_poison[0].name)
         return txt+" ! "
-    
+
     async def a_6(self,perso):
         "Main mutée"
         target = await self.select_random_players(1,perso.Team2)
@@ -325,12 +327,12 @@ class AttacksCog(commands.Cog):
         elif points==0:
             txt += random.choice(self.escape)
         return txt
-    
+
     async def c_6(self,perso):
         "Corps acide"
         targets = await self.select_random_players(3,perso.Team2)
         for t in targets:
-            await self.add_effects(t,'poison',1)
+            await self.add_effect(t,'poison',1)
         perso.thorny = True
         txt = "{} empoisonne {} et se protège contre la prochaine attaque ! ".format(perso.name, await self.merge_names(targets))
         return txt
@@ -363,7 +365,8 @@ class AttacksCog(commands.Cog):
         target = await self.select_random_players(1,perso.Team2)
         target[0].attack_bonus -= 1
         for i in perso.Team1.players:
-            i.attack_bonus += 1
+            # i.attack_bonus += 1
+            await self.add_effect(i, 'attack_bonus', 1, bonus=1)
         perso.thorny = True
         txt = "La {} utilise un sort de rage, augmentant leurs attaques, et effrayant {} qui voit ses attaques diminuer !".format(perso.name,target[0].name)
         return txt
@@ -372,7 +375,7 @@ class AttacksCog(commands.Cog):
         "Renforts aériens"
         for i in perso.Team2.players:
             await self.apply_dmg(i,22,perso)
-            await self.add_effects(i,'fire',2)
+            await self.add_effect(i,'fire',2)
         txt = "Des dragons rejoignent la {} et enflamment l'équipe adverse, leur enlevant 22pv chacun".format(perso.name)
         return txt
 
@@ -399,8 +402,8 @@ class AttacksCog(commands.Cog):
     async def u_10(self,perso):
         "Donut atomique"
         for p in perso.Team1.players:
-            await self.add_effects(p, 'regen', 1)
-            await self.add_effects(p, 'blessing', 1)
+            await self.add_effect(p, 'regen', 1)
+            await self.add_effect(p, 'blessing', 1)
         return "{} utilise un donut brillant en vert et, étonnamment, régénère tous ses alliés ! :doughnut: ".format(perso.name)
 
     async def a_13(self,perso):
@@ -420,7 +423,8 @@ class AttacksCog(commands.Cog):
         names = list()
         for t in targets:
             await self.apply_dmg(t,20,perso)
-            t.attack_bonus -= 1
+            # t.attack_bonus -= 1
+            await self.add_effect(t, 'attack_bonus', 1, bonus=-1)
             names.append(t.name)
         return "{p} refroidit {t[0]}, {t[1]} et {t[2]}, en faisant des dégâts à chacun et réduisant leurs attaques ! (-20pv)".format(p=perso.name,t=names)
     
@@ -436,7 +440,7 @@ class AttacksCog(commands.Cog):
         if len(targets) > 0:
             targets[0].frozen += 1
             if len(targets) > 1:
-                await self.add_effects(targets[1], 'bleeding', 2)
+                await self.add_effect(targets[1], 'bleeding', 2)
                 return "{p} lance une tempête affectant toute l'équipe ennemie, qui se retrouve avec {s} PV en moins ! La tempête gèle aussi {t} et blesse {t2}".format(p=perso.name,t=targets[0].name,s=points,t2=targets[1].name)
             return "{p} lance une tempête affectant toute l'équipe ennemie, qui se retrouve avec {s} PV en moins ! La tempête gèle aussi {t} ".format(p=perso.name,t=targets[0].name,s=points)
         return f"{perso.name} lance une tempête affectant toute l'équipe ennemie, qui se retrouve avec {s} PV en moins !"
@@ -452,17 +456,18 @@ class AttacksCog(commands.Cog):
         targets = await self.select_random_players(3,perso.Team2)
         for t in targets:
             await self.apply_dmg(t,20,perso)
+            await self.add_effect(t, 'attack_bonus', 1, bonus=-1)
         perso.provocation_coef += 1
         if len(targets) > 0:
             t = await self.merge_names([x.name for x in targets])
-            return "{p} utilise son aboiement pour effayer l'équipe adverse, ce qui fait baisser les attaques de  {t} !".format(p=perso.name, t=t)
+            return "{p} utilise son aboiement pour effayer l'équipe adverse, ce qui fait baisser les attaques de {t} !".format(p=perso.name, t=t)
         else:
             return f"{perso.name} n'a trouvé aucun adversaire"
     
     async def u_16(self,perso):
         "Flammes de l'enfer"
         for target in await self.select_random_players(50,perso.Team2):
-            await self.add_effects(target,'fire',3)
+            await self.add_effect(target,'fire',3)
             await self.apply_dmg(target,12,perso,False)
         return "{p} fait fissurer la terre, et des jets de lave enflamment l'équipe adverse, réduisant aussi leurs PV de 12 points !".format(p=perso.name)
 
@@ -507,7 +512,8 @@ class AttacksCog(commands.Cog):
 
     async def c_22(self,perso):
         "Chara"
-        perso.attack_bonus += 1
+        # perso.attack_bonus += 1
+        await self.add_effect(perso, 'attack_bonus', 2, bonus=1)
         perso.esquive += 20
         perso.thorny = True
         return "{p} perd contrôle et reçoit une augmentation soudaine de ses statistiques, lui apportant un bonus d'attaque et d'esquive".format(p=perso.name)
@@ -534,7 +540,8 @@ class AttacksCog(commands.Cog):
         "Bombe fumigène"
         victimes = list()
         for player in await self.select_random_players(3,perso.Team2):
-            player.attack_bonus -= 1
+            # player.attack_bonus -= 1
+            await self.add_effect(player, 'attack_bonus', 1, bonus=-1)
             player.esquive -= 15
             victimes.append(player.name)
         if len(victimes) == 3:
@@ -562,7 +569,7 @@ class AttacksCog(commands.Cog):
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],24,perso)
         if random.random()<0.1:
-            self.add_effects(target,'bleeding',2)
+            self.add_effect(target,'bleeding',2)
             txt = "{} attaque avec sa scie {} et lui fait {} PV de dégâts, en plus de lui causer un saignement !".format(perso.name,target[0].name,points)
         else:
             txt = "{} utilise son couteau sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target[0].name,points)
@@ -576,11 +583,14 @@ class AttacksCog(commands.Cog):
         "Rire inarrêtable"
         targets1 = await self.select_random_players(2, perso.Team1, avoid_player=perso, evil=False)
         for i in targets1:
-            i.attack_bonus += 1
+            # i.attack_bonus += 1
+            await self.add_effect(i, 'attack_bonus', 1, bonus=1)
         targets2 = await self.select_random_players(3,perso.Team2)
         for i in targets2:
-            i.attack_bonus += 1
-        perso.attack_bonus += 1
+            # i.attack_bonus -= 1
+            await self.add_effect(i, 'attack_bonus', 1, bonus=-1)
+        await self.add_effect(perso, 'attack_bonus', 1, bonus=1)
+        # perso.attack_bonus += 1
         txt = "{p} éclate d'un rire dément, ce qui a pour effet d'augmenter les attaques de lui et ses alliés {a[0]} et {a[1]}, ainsi que de diminuer celles de {t[0]}, {t[1]} et {t[2]} ! ".format(p=perso.name,a=[x.name for x in targets1],t=[x.name for x in targets2])
         return txt
     
@@ -588,7 +598,7 @@ class AttacksCog(commands.Cog):
         "Représentation spectaculaire"
         for target in await self.select_random_players(50,perso.Team2):
             await self.apply_dmg(target,26,perso)
-            await self.add_effects(target,'poison',2)
+            await self.add_effect(target,'poison',2)
         txt = "{p} se met à joyeusement danser. Chaque mouvement cause une explosion chez ses ennemis, leur faisant de lourds dégâts et les empoisonnant pour 2 tours".format(p=perso.name)
         return txt
 
