@@ -154,7 +154,7 @@ class AttacksCog(commands.Cog):
         players = list()
         IDs = list()
         possible_players = [x for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player]
-        if len([1 for x in Team.players if x.life[0]<=0]) > 0:
+        # if len([1 for x in Team.players if x.life[0]<=0]) > 0:
             # print([(x.name, x.life) for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player])
         if has_type!=None:
             possible_players = [x for x in possible_players if x.type==has_type]
