@@ -1,18 +1,18 @@
 en:
   attack:
     critical:
-      '0': It's a critical hit !
-      '1': Critical hit !
-      '2': Wow, what a critical hit !
-      '3': It's a critical hit !
-      '4': Critical hit ! !
+      '0': It's a critical hit!
+      '1': Critical hit!
+      '2': Wow, what a critical hit!
+      '3': It's a critical hit!
+      '4': Critical hit!
     dodge:
-      '0': Nice dodge !
-      '1': It's a dodge !
+      '0': Nice dodge!
+      '1': It's a dodge!
   classes:
     details: "Class details %{classe}"
     dodge: Chances to dodge
-    field: "Health Points : %{hp}\nChances to dodge : %{esc}%%"
+    field: "Health Points: %{hp}\nChances to dodge: %{esc}%%"
     hp: Health Points
     list_title: Classes list
     list:
@@ -51,16 +51,16 @@ en:
   player:
     decktitle: Characters of the player %{user}
     detailstitle: Character details
-    field: "Class : %{classe}\nBasic attack : %{att1}\nSkill : %{att2}\nUltimate skill : %{att3}\nPassive skill : %{passiv}\nCurrent price : %{price}\n\n%{got_emoji} Acquired : %{got}"
+    field: "Class: %{classe}\nBasic attack: %{att1}\nSkill: %{att2}\nUltimate skill: %{att3}\nPassive skill: %{passiv}\nCurrent price: %{price}\n\n%{got_emoji} Acquired: %{got}"
     invalidperson: Unable to find this character
     level: level
     listtitle: Character list
-    nopeople1: You don't own any characters !
-    nopeople2: The player %{user} don't own any character !
-    notfound: Unable to find the player %{user} !
+    nopeople1: You don't own any characters!
+    nopeople2: The player %{user} don't own any character!
+    notfound: Unable to find the player %{user}!
   start:
-    already: You already have characters !
-    persons: "Those characters are %{people}.\nYou can enter `%{p}deck` to see the list of your characters, and `%{p}help` for the list of available commands. Good luck !"
+    already: You already have characters!
+    persons: "Those characters are %{people}.\nYou can enter `%{p}deck` to see the list of your characters, and `%{p}help` for the list of available commands. Good luck!"
     welcome: "Welcome %{user} onto the adventure !\nTo get you started with good basics, we gave you 5 randoms characters."
   stats:
     general: "**Number of servers:** {}\n**Number of visible members:** {} ({} bots)\n**Number of code lines:** {}\n**Python version:** {}\n**Version of the `discord.py` lib:** {}\n**RAM usage:** {} GB\n**CPU usage:** {} %\n**API latency time:** {} ms"
