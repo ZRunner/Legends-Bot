@@ -269,8 +269,8 @@ class CombatCog(commands.Cog):
         """Ajoute un historique"""
         history = emb.fields[0]['value'].replace('**','')
         while len(history+text)>1000:
-            history = "\n".join(history.split("\n")[1:])
-        emb.fields[0]['value'] = history + "\n**"+text+'**'
+            history = "\n- ".join(history.split("\n")[1:])
+        emb.fields[0]['value'] = history + "\n- **"+text+'**'
 
 
     async def create_perso_status(self,p:Perso,emojis:dict):
