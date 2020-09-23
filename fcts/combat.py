@@ -178,9 +178,9 @@ class CombatCog(commands.Cog):
         elif action=='dead':
             result = '{} est mort, il ne peut rien faire'.format(perso.name)
         else:
+            result = await self.bot.cogs['AttacksCog'][action](perso)
             await perso.effects.execute(perso, 'after_attack')
             did_something = True
-        result = await self.bot.cogs['AttacksCog'][action](perso)
         return result, did_something
 
     async def make_tours(self, ctx:commands.Context, Team1:Team, Team2:Team, tours:int):
