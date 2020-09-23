@@ -89,6 +89,10 @@ class zbot(commands.AutoShardedBot):
     
     @property
     def _(self):
+        cog = self.get_cog('LangCog')
+        if cog is None:
+            self.log.error("Unable to load Language cog")
+            return lambda *args, **kwargs: args[1]
         return self.get_cog('LangCog').tr
     
     @property
