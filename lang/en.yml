@@ -14,6 +14,13 @@ en:
     dodge: Chances to dodge
     field: "Health Points : %{hp}\nChances to dodge : %{esc}%%"
     hp: Health Points
+    list_title: Classes list
+    list:
+      Guerrier: Warrior
+      Tank: Tank
+      Soigneur: Groomer
+      Soutien: Support
+      Espion: Spy
     name: Name
   config:
     new_lang: The bot is now in English!
@@ -36,6 +43,9 @@ en:
     no_subcmd: "The command %{cmd} doesn't have any subcommand"
     subcmd_not_found: "Subcommand %{cmd} not found"
     subcmds_list: "Subcommands:"
+  keywords:
+    'yes': 'yes'
+    'no': 'no'
   perms:
     manage_guild: manage server
   player:

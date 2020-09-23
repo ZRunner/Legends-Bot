@@ -25,8 +25,9 @@ class Commands(commands.Cog):
         for c in data:
             names.append(c['Name'].lower())
         if nom.lower() not in names:
+            t = await self.bot._(ctx, 'classes.list_title')
             emb = self.bot.cogs["EmbedCog"].Embed(
-                title="Liste des classes", color=self.embed_color).update_timestamp().create_footer(ctx.author)
+                title=t, color=self.embed_color).update_timestamp().create_footer(ctx.author)
             for c in data:
                 flds.append({'name': c['Name'], 'value': await self.bot._(ctx, 'classes.field', hp=c['Health'], esc=c['Escape']), 'inline': False})
         else:
@@ -111,10 +112,11 @@ class Commands(commands.Cog):
                 title=t, desc=x['Description'], color=self.embed_color).update_timestamp().create_footer(ctx.author)
             # Embed field data
             price = str(x['Prix']) + lg_coin
-            get = 'Oui' if name in deck else 'Non'
+            get = await self.bot._(ctx, 'keywords.yes' if name in deck else 'keywords.no')
             emo = ':white_check_mark:' if name in deck else ':x:'
             # Embed field
-            emb.fields = [{'name': name, 'value': await self.bot._(ctx, "player.field", classe=x['Class'], att1=x['Attaque 1'], att2=x['Attaque 2'], att3=x['Ultime'], passiv=x['Passif'], price=price, got_emoji=emo, got=get), 'inline':False}]
+            class_ = await self.bot._(ctx, 'classes.list.'+x['Class'])
+            emb.fields = [{'name': name, 'value': await self.bot._(ctx, "player.field", classe=class_, att1=x['Attaque 1'], att2=x['Attaque 2'], att3=x['Ultime'], passiv=x['Passif'], price=price, got_emoji=emo, got=get), 'inline':False}]
         elif name is None:
             t = await self.bot._(ctx, "player.listtitle")
             emb = self.bot.cogs["EmbedCog"].Embed(title=t, color=self.embed_color, fields=[

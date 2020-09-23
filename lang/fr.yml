@@ -14,6 +14,13 @@ fr:
     dodge: Chances d'esquiver
     field: "Points de vie : %{hp}\nChances d'esquive : %{esc}%%"
     hp: Points de vie
+    list_title: Liste des classes
+    list:
+      Guerrier: Guerrier
+      Tank: Tank
+      Soigneur: Soigneur
+      Soutien: Soutien
+      Espion: Espion
     name: Nom
   config:
     new_lang: Le bot est passé en français !
@@ -36,6 +43,9 @@ fr:
     no_subcmd: "La commande %{cmd} ne possède pas de sous-commande"
     subcmd_not_found: "Sous-commande %{cmd} introuvable"
     subcmds_list: "Sous-commandes :"
+  keywords:
+    'yes': oui
+    'no': non
   perms:
     manage_guild: gérer le serveur
   player:
