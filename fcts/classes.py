@@ -61,7 +61,7 @@ class Effects:
     
     def empty(self):
         """Remove every effect"""
-        self.array = array
+        self.array = list()
     
     async def execute(self, player, event:str):
         """Apply effects when needed
