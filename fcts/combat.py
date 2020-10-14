@@ -17,42 +17,44 @@ class CombatCog(commands.Cog):
     def cog_unload(self):
         self.in_combat = list()
     
-    async def select_team(self,user,channel,deck):
+    async def select_team(self, user:discord.Member, channel:discord.TextChannel, deck:dict):
         """Demande à un utilisateur de choisir 5 personnages"""
         try:
             suppr = self.bot.cogs['UtilitiesCog'].suppr
             deck = [x for x in deck.values()]
             names = [x['personnage'] for x in deck]
-            bot_msg = await channel.send("{}, veuillez choisir vos personnages. Pour cela, entrez simplement leurs numéros, séparés par des virgules. Voici la liste de vos personnages :\n {}".format(user.mention,"\n ".join(["{}) {}".format(e+1,v) for e,v in enumerate(names)])))
+            txt = await self.bot._(channel, 'combat.choice.select', user=user.mention, people="\n".join(["{}) {}".format(e+1,v) for e,v in enumerate(names)]))
+            bot_msg = await channel.send(txt)
             def check(msg):
-                return msg.author==user and msg.channel==channel
+                msg.author == user and msg.channel == channel
+                return msg.author == user and msg.channel == channel
             tries = 0
             choice = list()
-            while len(choice)<5:
+            while len(choice) != 5:
                 try:
                     choice_digits = list()
                     msg = await self.bot.wait_for('message', timeout=self.timeouts['choix-persos'], check=check)
                 except asyncio.TimeoutError:
-                    await channel.send("Vous avez été trop long à choisir, abandon du combat")
+                    await channel.send(await self.bot._(channel, 'combat.choice.too-late'))
                     await suppr(bot_msg)
                     return []
                 try:
                     choice = []
-                    for item in msg.content.split(','):
+                    for item in msg.content.split(' '):
                         item = item.strip()
                         if int(item)>0 and item not in choice_digits:
                             choice_digits.append(item)
                             choice.append(deck[int(item)-1])
                 except:
                     if tries==3:
-                        await channel.send("Vous avez échoué trop de fois :confused:")
+                        await channel.send(await self.bot._(channel, 'combat.choice.too-many-tries'))
                         await suppr(bot_msg)
                         return []
-                    await channel.send("Réponse invalide. Veuillez recommencer")
+                    await channel.send(await self.bot._(channel, 'combat.choice.invalid'))
                     tries += 1
                 else:
-                    if len(choice)<5:
-                        await channel.send("Vous devez sélectionner 5 personnages")
+                    if len(choice) != 5:
+                        await channel.send(await self.bot._(channel, 'combat.choice.missing-count'))
                         tries +=1
             await suppr(bot_msg)
             await suppr(msg)
@@ -61,32 +63,32 @@ class CombatCog(commands.Cog):
             await self.bot.cogs["ErrorsCog"].on_error(e,None)
         
 
-    async def begin(self,ctx,tours:int):
+    async def begin(self, ctx:commands.Context, tours:int):
         """Attend un début de partie"""
         if ctx.author in self.in_combat:
-            return await ctx.send("{}, Vous avez déjà un combat en cours !".format(ctx.author.mention))
+            return await ctx.send(await self.bot._(ctx, 'combat.preparation.already-in', user=ctx.author.mention))
         play1_deck = await ctx.bot.cogs['UsersCog'].get_user_deck(ctx.author.id)
-        if len(play1_deck)<5:
-            return await ctx.send("Vous ne possédez pas assez de personnages pour jouer !")
-        msg = await ctx.send("Un combat se prépare ! Cliquez sur la réaction :white_check_mark: pour affronter {} !".format(ctx.author))
+        if len(play1_deck) < 5:
+            return await ctx.send(await self.bot._(ctx, 'combat.preparation.too-few', user=ctx.author.mention))
+        msg = await ctx.send(await self.bot._(ctx, 'combat.preparation.preparing', user=ctx.author))
         await msg.add_reaction('✅')
         self.in_combat.append(ctx.author)
         # Sélection de l'adversaire
         def check(reaction, user):
             return user != ctx.author and str(reaction.emoji) == '✅' and reaction.message.id==msg.id and user != ctx.guild.me and user not in self.in_combat
         try:
-            _, user = await self.bot.wait_for('reaction_add', timeout=20.0, check=check)
+            _, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
         except asyncio.TimeoutError:
             self.in_combat.remove(ctx.author)
-            await ctx.send("{}, vous n'avez pas réussi à trouver un adversaire dans les temps :hourglass:".format(ctx.author.mention))
+            await ctx.send(await self.bot._(ctx, 'combat.preparation.too-late', user=ctx.author.mention))
             return
         await msg.clear_reactions()
         play2_deck = await ctx.bot.cogs['UsersCog'].get_user_deck(user.id)
-        if len(play2_deck)<5:
+        if len(play2_deck) < 5:
             self.in_combat.remove(ctx.author)
-            return await ctx.send("{}, vous ne possédez pas assez de personnages pour jouer !".format(user.mention))
+            return await ctx.send(await self.bot._(ctx, 'combat.preparation.too-few', user=user.mention))
         self.in_combat.append(user)
-        await ctx.send("{} a rejoint le combat ! Bonne chance à vous deux !".format(user.mention))
+        await ctx.send(await self.bot._(ctx, 'combat.preparation.user-joined', user=user.mention))
         # Sélection des personnages
         try:
             play1_players = []
@@ -166,28 +168,32 @@ class CombatCog(commands.Cog):
             pass
         except Exception as e:
             raise e
-    
-    async def do_attack(self, action:list, perso:Perso):
+
+    async def do_attack(self, ctx:commands.Context, action:str, perso:Perso) -> (str, str, bool):
         """Exécute une action"""
         did_something = False
         await perso.effects.execute(perso, 'before_attack')
         if action=='pass':
-            result = '{} passe son tour 🏃'.format(perso.name)
+            result = await self.bot._(ctx, 'combat.attacks.passed', user=perso.name)
         elif action=='frozen':
-            result = '{} est immobilisé, il ne peut rien faire :snowflake:'.format(perso.name)
+            result = await self.bot._(ctx, 'combat.attacks.frozen', user=perso.name)
         elif action=='dead':
-            result = '{} est mort, il ne peut rien faire'.format(perso.name)
+            result = await self.bot._(ctx, 'combat.attacks.dead', user=perso.name)
         else:
             result = await self.bot.cogs['AttacksCog'][action](perso)
             await perso.effects.execute(perso, 'after_attack')
             did_something = True
-        return result, did_something
+        return action, result, did_something
 
     async def make_tours(self, ctx:commands.Context, Team1:Team, Team2:Team, tours:int):
         """Fait passer un tour"""
         # Préparation de l'embed
-        title = "Combat : {} contre {}".format(Team1.user.display_name,Team2.user.display_name)
-        emb = self.bot.cogs['EmbedCog'].Embed(title=title,desc="*Réagissez à ce message pour effectuer une action*",color=self.bot.cogs['Commands'].embed_color,fields=[{'name':'Historique','value':'Début du combat'},{'name':'Equipe 1','value':'None'},{'name':'Equipe 2','value':'None'},{'name':"Action...",'value':'loading...'}])
+        title = await self.bot._(ctx, 'combat.embed.title', user1=Team1.user.display_name, user2=Team2.user.display_name)
+        desc = await self.bot._(ctx, 'combat.embed.desc')
+        f1_v= await self.bot._(ctx, 'combat.embed.history')
+        f1_k= await self.bot._(ctx, 'combat.embed.beginning')
+        loading = await self.bot._(ctx, 'combat.embed.loading')
+        emb = self.bot.cogs['EmbedCog'].Embed(title=title,desc=desc,color=self.bot.cogs['Commands'].embed_color,fields=[{'name':f1_v,'value':f1_k},{'name':loading,'value':'None'},{'name':loading,'value':'None'},{'name':loading,'value':loading}])
         msg = None
         result = str()
         need_update = True
@@ -217,17 +223,17 @@ class CombatCog(commands.Cog):
             if not (Team1.user in self.in_combat or Team2.user in self.in_combat):
                 break
 
-            await self.update_status(emb,Team1,Team2)
+            await self.update_status(ctx, emb, Team1, Team2)
             # if msg != None:
             #     await msg.delete()
             # msg = await ctx.send(embed=emb.discord_embed())
             msg = await send_embed(msg, emb, result, need_update)
             perso = Team1.players[Team1.nbr]
-            result, need_update = await self.do_attack(await self.ask_action(msg,emb,perso,Team1.user), perso)
+            action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team1.user), perso)
             # await ctx.send(result)
-            if "passe son tour" in result:
+            if action == 'pass':
                 perso.points += 2
-            else:
+            elif need_update or action == "freeze":
                 perso.points += 1
             await self.add_history(emb,result)
             await self.apply_effects(Team1)
@@ -239,16 +245,16 @@ class CombatCog(commands.Cog):
             if not (Team1.user in self.in_combat or Team2.user in self.in_combat):
                 break
 
-            await self.update_status(emb,Team1,Team2)
+            await self.update_status(ctx, emb, Team1, Team2)
             # await msg.delete()
             # msg = await ctx.send(embed=emb.discord_embed())
             msg = await send_embed(msg, emb, result, need_update)
             perso = Team2.players[Team2.nbr]
-            result, need_update = await self.do_attack(await self.ask_action(msg,emb,perso,Team2.user), perso)
+            action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team2.user), perso)
             # await ctx.send(result)
-            if "passe son tour" in result:
+            if action == 'pass':
                 perso.points += 2
-            else:
+            elif need_update or action == "freeze":
                 perso.points += 1
             await self.add_history(emb,result)
             await self.apply_effects(Team2)
@@ -257,7 +263,7 @@ class CombatCog(commands.Cog):
             
             Team2.rounds += 1
 
-        await self.update_status(emb,Team1,Team2)
+        await self.update_status(ctx, emb, Team1, Team2)
         del emb.fields[3]
         # if msg != None:
         #     await msg.delete()
@@ -273,7 +279,7 @@ class CombatCog(commands.Cog):
         emb.fields[0]['value'] = history + "\n- **"+text+'**'
 
 
-    async def create_perso_status(self,p:Perso,emojis:dict):
+    async def create_perso_status(self, p:Perso, emojis:dict):
         life = round(p.life[0], None if p.life[0]==int(p.life[0]) else 1)
         if life == 0:
             return '{} ({}) : {} K.O.'.format(p.name,p.classe,emojis['ko'])
@@ -307,7 +313,7 @@ class CombatCog(commands.Cog):
             text += "{}**|** {} {}".format(emojis['none'], emojis['effect'], ' '.join(other_effects))
         return text
 
-    async def update_status(self,emb,Team1,Team2):
+    async def update_status(self, ctx, emb, Team1, Team2):
         """Met à jour l'état des personnages"""
         life_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('legends_heart'))
         none_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('vide'))
@@ -318,20 +324,20 @@ class CombatCog(commands.Cog):
         poison_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('poison'))
         att_boost = str(await self.bot.cogs['UtilitiesCog'].get_emoji('att_boost'))
         att_less = str(await self.bot.cogs['UtilitiesCog'].get_emoji('att_less'))
-        emb.fields[1]['name'] = "Equipe de "+Team1.user.display_name
+        emb.fields[1]['name'] = await self.bot._(ctx, 'combat.embed.team', user=Team1.user.display_name)
         text = ""
         emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji,'poison':poison_emoji, 'att_boost':att_boost, 'att_less':att_less}
         for p in Team1.players:
             text += "\n"+await self.create_perso_status(p,emojis_map)
         emb.fields[1]['value'] = text[:1024]
 
-        emb.fields[2]['name'] = "Equipe de "+Team2.user.display_name
+        emb.fields[2]['name'] = await self.bot._(ctx, 'combat.embed.team', user=Team2.user.display_name)
         text = ""
         for p in Team2.players:
             text += "\n"+await self.create_perso_status(p,emojis_map)
         emb.fields[2]['value'] = text[:1024]
 
-    async def ask_action(self, msg, emb, perso, player):
+    async def ask_action(self, msg, emb, perso, player) -> str:
         """Demande à un joueur de choisir une action"""
         if perso.frozen > 0:
             perso.frozen -= 1
@@ -352,8 +358,8 @@ class CombatCog(commands.Cog):
             attaques += "{}  {}\n".format(emojis[-1], perso.ultime)
         if True:
             emojis.append('🏃')
-            attaques += '🏃 Passer le tour'
-        emb.fields[3] = {'name':"**{}**, choisissez l'action de {}".format(player.display_name,perso.name),'value':attaques,'inline':False}
+            attaques += await self.bot._(msg.channel, 'combat.attack.pass', e='🏃')
+        emb.fields[3] = {'name':await self.bot._(msg.channel, 'combat.attack.choose', user=player.display_name, player=perso.name),'value':attaques,'inline':False}
         await msg.edit(embed=emb)
         for x in emojis:
             await msg.add_reaction(x)

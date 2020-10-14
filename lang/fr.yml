@@ -22,6 +22,32 @@ fr:
       Soutien: Soutien
       Espion: Espion
     name: Nom
+  combat:
+    choice:
+      select: "%{user}, veuillez choisir vos personnages. Pour cela, entrez simplement leurs numéros, séparés par des espaces. Voici la liste de vos personnages :\n %{people}"
+      too-late: Vous avez été trop long à choisir. Abandon du combat
+      too-many-tries: "Vous avez échoué trop de fois :confused:"
+      invalid: Réponse invalide. Veuillez recommencer
+      missing-count: Vous devez sélectionner 5 personnages
+    preparation:
+      already-in: "%{user}, vous avez déjà un combat en cours !"
+      too-few: "%{user}, vous ne possédez pas assez de personnages pour jouer !"
+      preparing: "Un combat se prépare ! Cliquez sur la réaction ✅ pour affronter %{user} !"
+      too-late: "%{user}, vous n'avez pas réussi à trouver un adversaire dans les temps :hourglass:"
+      user-joined: "%{user} a rejoint le combat ! Bonne chance à vous deux !"
+    attacks:
+      passed: "%{user} passe son tour 🏃"
+      frozen: "%{user} est immobilisé, il ne peut rien faire :snowflake:"
+      dead: "%{user} est mort, il ne peut rien faire"
+      pass: '%{e} Passer le tour'
+    embed:
+      title: "Combat : %{user1} contre %{user2}"
+      desc: "*Réagissez à ce message pour effectuer une action*"
+      history: Historique
+      beginning: Début du combat
+      team: "Equipe de %{user}"
+      loading: Chargement...
+      choose: "**%{user}**, choisissez l'action de %{perso}"
   config:
     new_lang: Le bot est passé en français !
   error:
