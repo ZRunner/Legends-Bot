@@ -37,8 +37,8 @@ fr:
       user-joined: "%{user} a rejoint le combat ! Bonne chance à vous deux !"
     attacks:
       passed: "%{user} passe son tour 🏃"
-      frozen: "%{user} est immobilisé, il ne peut rien faire :snowflake:"
-      dead: "%{user} est mort, il ne peut rien faire"
+      frozen: "%{user} est immobilisé et ne peut rien faire :snowflake:"
+      dead: "%{user} est K.-O. et ne peut rien faire"
       pass: '%{e} Passer le tour'
     embed:
       title: "Combat : %{user1} contre %{user2}"
