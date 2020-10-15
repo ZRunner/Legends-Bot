@@ -22,6 +22,32 @@ en:
       Soutien: Support
       Espion: Spy
     name: Name
+  combat:
+    choice:
+      select: "%{user}, please choose your characters. To do so, simply enter their numbers, separated by gaps.. Here is the list of your characters :\n %{people}"
+      too-late: You took too long to choose. Abandoning the fight
+      too-many-tries: "You failed too many times :confused:"
+      invalid: Invalid answer. Please try again
+      missing-count: You must select 5 characters
+    preparation:
+      already-in: "%{user}, you already have a fight in progress!"
+      too-few: "%{user}, you don't have enough characters to play!"
+      preparing: "A fight is brewing! Click on the reaction ✅ to challenge %{user} !"
+      too-late: "%{user}, you did not manage to find an opponent in time :hourglass:"
+      user-joined: "%{user} joins the fight ! Good luck to both of you !"
+    attacks:
+      passed: "%{user} skip their turn 🏃"
+      frozen: "%{user} is immobilized and can't do anything :snowflake:"
+      dead: "%{user} is knocked out and can't do anything"
+      pass: '%{e} Skip the round'
+    embed:
+      title: "Fight : %{user1} versus %{user2}"
+      desc: "*React to this message to perform an action*"
+      history: History
+      beginning: Start of the fight
+      team: "Team of %{user}"
+      loading: Loading...
+      choose: "**%{user}**, please choose the action of %{perso}"    
   config:
     new_lang: The bot is now in English!
   error:
@@ -61,7 +87,7 @@ en:
   start:
     already: You already have characters!
     persons: "Those characters are %{people}.\nYou can enter `%{p}deck` to see the list of your characters, and `%{p}help` for the list of available commands. Good luck!"
-    welcome: "Welcome %{user} onto the adventure !\nTo get you started with good basics, we gave you 5 randoms characters."
+    welcome: "Welcome %{user} onto the adventure!\nTo get you started with good basics, we gave you 5 randoms characters."
   stats:
     general: "**Number of servers:** {}\n**Number of visible members:** {} ({} bots)\n**Number of code lines:** {}\n**Python version:** {}\n**Version of the `discord.py` lib:** {}\n**RAM usage:** {} GB\n**CPU usage:** {} %\n**API latency time:** {} ms"
     title: "Bot statistics"        
