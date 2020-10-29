@@ -8,7 +8,6 @@ class AttacksCog(commands.Cog):
     def __init__(self,bot):
         self.bot = bot
         self.file = 'attacks'
-        self.shields_lvl = None
         self.critical = ["C'est un coup critique !","Coup critique !","Wow, quel coup critique !","Il s'agit d'un coup critique !","Coup critique !"]
         self.escape = ["Belle esquive !","Heureusement qu'il a esquivé !","C'est une esquive !"]
         self.attacks = {"Coup laser":self.a_1,
@@ -74,30 +73,12 @@ class AttacksCog(commands.Cog):
             return names[0] + " et " + names[1]
         else:
             return ", ".join(names[:-2]) + " et "+ names[-1]
-    
-    async def calc_shield(self,points:int):
-        if points == 0:
-            return 0
-        return round(25.45 * log(points) + 25)
         
-    async def attack_with_shield(self,shield_lvl:int,points:int,life:int):
-        damage = 0
-        if self.shields_lvl==None:
-            self.shields_lvl = list()
-            for i in range(30):
-                self.shields_lvl.append(await self.calc_shield(i))
-        sh = self.shields_lvl[shield_lvl] - points
-        if sh<0:
-            damage -= sh
-            shield_lvl = 0
-        else:
-            for e,i in enumerate(self.shields_lvl):
-                if i >= sh:
-                    shield_lvl = e-1
-                    break
-        if life-damage < 0:
-            damage = life
-        return damage, shield_lvl
+    async def attack_with_shield(self, perso, points:int) -> int:
+        damage = points - perso.shield_boost*points
+        if perso.life[0] - damage < 0:
+            damage = perso.life[0]
+        return round(damage)
     
     async def apply_dmg(self,perso,points:int,attacker,critic:bool=True) -> float:
         if attacker.passifType != 'B':
@@ -107,16 +88,16 @@ class AttacksCog(commands.Cog):
         if random.randrange(100) < perso.esquive and perso.frozen == 0:
             return 0
         attack_boost = attacker.attack_bonus(perso.type)
-        print(perso.name, attack_boost)
+        # print(perso.name, attack_boost)
         if attacker.passifType == 'B':
             await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
         points += round(points * (attack_boost*0.25),1)
         if critic and random.random() < await self.calc_critic(perso.lvl):
             points += round(random.randint(20,30)/100*points,1)
-        damage, perso.shield = await self.attack_with_shield(perso.shield,points,perso.life[0])
+        damage = await self.attack_with_shield(perso,points)
         perso.life[0] = max(0,perso.life[0]-damage)
         if perso.thorny:
-            damage, attacker.shield = await self.attack_with_shield(attacker.shield,5*log(perso.lvl) + perso.lvl/5,attacker.life[0])
+            damage = await self.attack_with_shield(attacker,5*log(perso.lvl) + perso.lvl/5)
             attacker.life[0] = max(0, attacker.life[0]-damage)
         if perso.passifType != 'H':
             await self.bot.cogs['CombatCog'].apply_one_passif(perso)
@@ -153,9 +134,7 @@ class AttacksCog(commands.Cog):
 
         players = list()
         IDs = list()
-        possible_players = [x for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player]
-        # if len([1 for x in Team.players if x.life[0]<=0]) > 0:
-            # print([(x.name, x.life) for x in Team.players if x.invisible==0 and x.life[0]>0 and x!=avoid_player])
+        possible_players = [x for x in Team.players if not x.invisible and x.life[0]>0 and x!=avoid_player]
         if has_type!=None:
             possible_players = [x for x in possible_players if x.type==has_type]
         len_targets = min(len(possible_players),nbr)
@@ -192,14 +171,17 @@ class AttacksCog(commands.Cog):
     async def c_1(self,perso):
         "Force protectrice"
         names = [perso.name]
-        perso.shield += 2
-        while len(names)<3:
+        # perso.shield += 2
+        await self.add_effect(perso, 'shield_bonus', 1)
+        await self.add_effect(perso, 'shield_bonus', 1)
+        while len(names) < 3:
             target = random.choice(perso.Team1.players)
             if target.name in names:
                 continue
-            target.shield += 1
+            # target.shield += 1
+            await self.add_effect(target, 'shield_bonus', 1)
             names.append(target.name)
-        return "{p} lève la main et protège, grâce à une étrange énergie, {t[1]} et {t[2]}, en leur ajoutant 2 points de bouclier".format(p=names[0],t=names)
+        return "{p} lève la main et protège, grâce à une étrange énergie, {t[1]} et {t[2]}, en leur ajoutant 1 point de bouclier".format(p=names[0],t=names)
     
     async def u_1(self,perso):
         "Tir de la mort"
@@ -236,7 +218,8 @@ class AttacksCog(commands.Cog):
         "Le précieux"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],32,perso)
-        perso.invisible += 1
+        await self.add_effect(perso, 'invisibility', 1)
+        # perso.invisible += 1
         txt = "La main de {} scintille un instant. Il devient invisible et parvient à faire {} PV de dégâts à {} ! ".format(perso.name,points,target[0].name)
         if points>32:
             txt += random.choice(self.critical)
@@ -248,7 +231,8 @@ class AttacksCog(commands.Cog):
         "Doigt pistolet"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target,26,perso)
-        perso.invisible += 1
+        await self.add_effect(perso, 'invisibility', 1)
+        # perso.invisible += 1
         txt = "{} utilise son doigt sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target.name,points)
         if points>26:
             txt += random.choice(self.critical)
@@ -264,7 +248,8 @@ class AttacksCog(commands.Cog):
             await self.add_effect(t, 'attack_bonus', 1, bonus=1)
         targets_shield = await self.select_random_players(2, perso.Team1, evil=False)
         for t in targets_shield:
-            t.shield += 1
+            # t.shield += 1
+            await self.add_effect(t, 'shield_bonus', 1)
         return "{} utilise ses compétences sur {} en leur procurant un boost d'attaque, et ajoute un bouclier à {} ! ".format(perso.name,await self.merge_names(targets_attack),await self.merge_names(targets_shield))
 
     async def u_4(self,perso):
@@ -273,7 +258,8 @@ class AttacksCog(commands.Cog):
             await self.apply_dmg(t,28,perso)
         targets_shield = await self.select_random_players(2,perso.Team2)
         for t in targets_shield:
-            t.shield -= 1
+            # t.shield -= 1
+            await self.add_effect(t, 'shield_bonus', 1)
         return "{} utilise ses compétences sur l'équipe adverse en leur infligeant 28pv de dégâts, et réduit le bouclier de {} ! ".format(perso.name,await self.merge_names(targets_shield))
 
     async def a_5(self,perso):
@@ -320,7 +306,8 @@ class AttacksCog(commands.Cog):
         "Main mutée"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target,20,perso)
-        perso.invisible += 1
+        await self.add_effect(perso, 'invisibility', 1)
+        # perso.invisible += 1
         txt = "{} attaque de sa main sur {} et lui fait {} PV de dégâts ! ".format(perso.name,target.name,points)
         if points>20:
             txt += random.choice(self.critical)
@@ -341,7 +328,8 @@ class AttacksCog(commands.Cog):
         "Seconde bouche"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target,30,perso)
-        perso.invisible += 1
+        await self.add_effect(perso, 'invisibility', 1)
+        # perso.invisible += 1
         txt = "{} mord violemment {} en lui faisant {} PV de dégâts, avec un effet de poison ! ".format(perso.name,target.name,points)
         if points>30:
             txt += random.choice(self.critical)
@@ -443,7 +431,7 @@ class AttacksCog(commands.Cog):
                 await self.add_effect(targets[1], 'bleeding', 2)
                 return "{p} lance une tempête affectant toute l'équipe ennemie, qui se retrouve avec {s} PV en moins ! La tempête gèle aussi {t} et blesse {t2}".format(p=perso.name,t=targets[0].name,s=points,t2=targets[1].name)
             return "{p} lance une tempête affectant toute l'équipe ennemie, qui se retrouve avec {s} PV en moins ! La tempête gèle aussi {t} ".format(p=perso.name,t=targets[0].name,s=points)
-        return f"{perso.name} lance une tempête affectant toute l'équipe ennemie, qui se retrouve avec {s} PV en moins !"
+        return f"{perso.name} lance une tempête affectant toute l'équipe ennemie, qui se retrouve avec {points} PV en moins !"
     
     async def a_16(self,perso):
         "Triple morsure"
@@ -521,7 +509,8 @@ class AttacksCog(commands.Cog):
     async def u_22(self,perso):
         "Esprit déterminé"
         for i in await self.select_random_players(50, perso.Team1, avoid_player=perso, evil=False):
-            i.shield += 1
+            # i.shield += 1
+            await self.add_effect(i, 'shield_bonus', 1)
             i.esquive += 30
         return "{}, déterminé comme jamais, soigne et renforce le bouclier de tous ses alliés".format(perso.name)
 
@@ -556,7 +545,8 @@ class AttacksCog(commands.Cog):
         "Lame cachée"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target[0],34,perso)
-        perso.invisible += 1
+        await self.add_effect(perso, 'invisibility', 1)
+        # perso.invisible += 1
         txt = "{} disparaît dans la fumée, et utilise sa lame cachée pour faire {} de dégâts à {}. ".format(perso.name,points,target[0].name)
         if points>34:
             txt += random.choice(self.critical)
@@ -629,7 +619,8 @@ class AttacksCog(commands.Cog):
             txt += random.choice(self.escape)
         allys = await self.select_random_players(2,perso.Team1,avoid_player=perso)
         for a in allys+[perso]:
-            a.shield += 1
+            # a.shield += 1
+            await self.add_effect(a, 'shield_bonus', 1)
         return txt
 
     async def u_32(self,perso):
@@ -646,7 +637,8 @@ class AttacksCog(commands.Cog):
         "Exemple"
         target = await self.select_random_players(1,perso.Team2)
         points = await self.apply_dmg(target,10,perso)
-        perso.invisible += 1
+        await self.add_effect(perso, 'invisibility', 1)
+        # perso.invisible += 1
         txt = "{} utilise ses pouvoirs magiques sur {} et fait {} PV de dégâts ! ".format(perso.name,target.name,points)
         if points>10:
             txt += random.choice(self.critical)

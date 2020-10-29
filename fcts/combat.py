@@ -224,44 +224,45 @@ class CombatCog(commands.Cog):
                 break
 
             await self.update_status(ctx, emb, Team1, Team2)
-            # if msg != None:
-            #     await msg.delete()
-            # msg = await ctx.send(embed=emb.discord_embed())
             msg = await send_embed(msg, emb, result, need_update)
-            perso = Team1.players[Team1.nbr]
+            perso = Team1.players[Team1.nbr] # sélection du personnage
+            # on applique les effets sur ce perso
+            await self.apply_effects(perso)
+            # l'utilisateur choisit l'action, et on l'exécute
             action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team1.user), perso)
-            # await ctx.send(result)
             if action == 'pass':
                 perso.points += 2
             elif need_update or action == "freeze":
                 perso.points += 1
+            # on ajoute le résultat à l'historique
             await self.add_history(emb,result)
-            await self.apply_effects(Team1)
+            # on enlève les effets thorny de l'équipe adverse
             for p in Team2.players:
                 p.thorny = False
             
-            Team1.rounds += 1
+            Team1.rounds += 1 # incrémentation du nombre de tours
 
             if not (Team1.user in self.in_combat or Team2.user in self.in_combat):
                 break
 
             await self.update_status(ctx, emb, Team1, Team2)
-            # await msg.delete()
-            # msg = await ctx.send(embed=emb.discord_embed())
             msg = await send_embed(msg, emb, result, need_update)
-            perso = Team2.players[Team2.nbr]
+            perso = Team2.players[Team2.nbr] # sélection du personnage
+            # on applique les effets sur ce perso
+            await self.apply_effects(perso)
+            # l'utilisateur choisit l'action, et on l'exécute
             action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team2.user), perso)
-            # await ctx.send(result)
             if action == 'pass':
                 perso.points += 2
             elif need_update or action == "freeze":
                 perso.points += 1
+            # on ajoute le résultat à l'historique
             await self.add_history(emb,result)
-            await self.apply_effects(Team2)
+            # on enlève les effets thorny de l'équipe adverse
             for p in Team1.players:
                 p.thorny = False
             
-            Team2.rounds += 1
+            Team2.rounds += 1 # incr"mentation du nombre de tours
 
         await self.update_status(ctx, emb, Team1, Team2)
         del emb.fields[3]
@@ -275,7 +276,7 @@ class CombatCog(commands.Cog):
         """Ajoute un historique"""
         history = emb.fields[0]['value'].replace('**','')
         while len(history+text)>1000:
-            history = "\n- ".join(history.split("\n")[1:])
+            history = "\n".join(history.split("\n")[1:])
         emb.fields[0]['value'] = history + "\n- **"+text+'**'
 
 
@@ -284,23 +285,31 @@ class CombatCog(commands.Cog):
         if life == 0:
             return '{} ({}) : {} K.O.'.format(p.name,p.classe,emojis['ko'])
         text = '{} ({}) : {} {}/{}'.format(p.name,p.classe,emojis['life'],life,p.life[1])
-        text += '{}**|** Energie : {}'.format(emojis['none'],p.points)
+        text += '{}**|** {} {}'.format(emojis['none'], emojis['energy'], p.points)
         other_effects = list()
         attack_bonus = 0
         critic_bonus = 0
+        shield_boosts = [0, 0]
         for e in p.effects.array:
             if e.name == "attack_bonus":
                 attack_bonus += e.value
             elif e.name == "critic_bonus":
                 critic_bonus += e.value
+            elif e.name == "shield_bonus":
+                shield_boosts[0] += 1
+            elif e.name == "shield_malus":
+                shield_boosts[1] += 1
             elif e.emoji:
-                text += '{}**|** {} {}'.format(emojis['none'], e.emoji, e.duration)
+                emoji = e.emoji if isinstance(e.emoji, str) else str(self.bot.get_emoji(e.emoji))
+                text += '{}**|** {} {}'.format(emojis['none'], emoji, e.duration)
             else:
                 other_effects.append(e.name)
-        if p.shield > 0:
-            text += "{}**|** {} {}".format(emojis['none'],'🛡',p.shield)
-        if p.invisible > 0:
-            text += "{}**|** {} {}".format(emojis['none'],emojis['invisible'],p.invisible)
+        if shield_boosts[0] > 0:
+            text += "{}**|** {} {}".format(emojis['none'],'🛡',shield_boosts[0])
+        if shield_boosts[1] > 0:
+            text += "{}**|** {} {}".format(emojis['none'],emojis['shield_less'],shield_boosts[1])
+        # if p.invisible > 0:
+        #     text += "{}**|** {} {}".format(emojis['none'],emojis['invisible'],p.invisible)
         if p.frozen > 0:
             text += "{}**|** {} {}".format(emojis['none'],':snowflake:',p.frozen)
         if attack_bonus > 0:
@@ -315,18 +324,21 @@ class CombatCog(commands.Cog):
 
     async def update_status(self, ctx, emb, Team1, Team2):
         """Met à jour l'état des personnages"""
-        life_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('legends_heart'))
-        none_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('vide'))
-        effect_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('effects'))
-        ko_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('ko'))
-        invisible_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('invisible'))
-        blood_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('bleed'))
-        poison_emoji = str(await self.bot.cogs['UtilitiesCog'].get_emoji('poison'))
-        att_boost = str(await self.bot.cogs['UtilitiesCog'].get_emoji('att_boost'))
-        att_less = str(await self.bot.cogs['UtilitiesCog'].get_emoji('att_less'))
+        get_emoji = self.bot.cogs['UtilitiesCog'].get_emoji
+        life_emoji = str(await get_emoji('legends_heart'))
+        none_emoji = str(await get_emoji('vide'))
+        effect_emoji = str(await get_emoji('effects'))
+        ko_emoji = str(await get_emoji('ko'))
+        invisible_emoji = str(await get_emoji('invisible'))
+        blood_emoji = str(await get_emoji('bleed'))
+        poison_emoji = str(await get_emoji('poison'))
+        att_boost = str(await get_emoji('att_boost'))
+        att_less = str(await get_emoji('att_less'))
+        shield_less = str(await get_emoji('shield_less'))
+        energy = str(await get_emoji('energy'))
         emb.fields[1]['name'] = await self.bot._(ctx, 'combat.embed.team', user=Team1.user.display_name)
         text = ""
-        emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji,'poison':poison_emoji, 'att_boost':att_boost, 'att_less':att_less}
+        emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji,'poison':poison_emoji, 'att_boost':att_boost, 'att_less':att_less, 'shield_less': shield_less, 'energy': energy}
         for p in Team1.players:
             text += "\n"+await self.create_perso_status(p,emojis_map)
         emb.fields[1]['value'] = text[:1024]
@@ -358,8 +370,8 @@ class CombatCog(commands.Cog):
             attaques += "{}  {}\n".format(emojis[-1], perso.ultime)
         if True:
             emojis.append('🏃')
-            attaques += await self.bot._(msg.channel, 'combat.attack.pass', e='🏃')
-        emb.fields[3] = {'name':await self.bot._(msg.channel, 'combat.attack.choose', user=player.display_name, player=perso.name),'value':attaques,'inline':False}
+            attaques += await self.bot._(msg.channel, 'combat.attacks.pass', e='🏃')
+        emb.fields[3] = {'name':await self.bot._(msg.channel, 'combat.embed.choose', user=player.display_name, perso=perso.name),'value':attaques,'inline':False}
         await msg.edit(embed=emb)
         for x in emojis:
             await msg.add_reaction(x)
@@ -385,12 +397,12 @@ class CombatCog(commands.Cog):
         return reaction
 
 
-    async def apply_effects(self,Team1):
+    async def apply_effects(self, player:Perso):
         """Applique les effets sur un perso (feu,regen etc)"""
-        for player in Team1.players:
-            await player.effects.execute(player, 'end_turn')
-            player.effects.clean()
-            player.invisible = max(player.invisible-1, 0)
+        await player.effects.execute(player, 'end_turn')
+        player.effects.clean()
+        # if player.invisible > 0:
+        #     player.invisible = max(player.invisible-1, 0)
 
 
 def setup(bot):

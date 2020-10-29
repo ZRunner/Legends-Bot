@@ -43,13 +43,11 @@ class PersosCog(commands.Cog):
         self.bot = bot
         self.file = "persos"
         self.data = dict()
-        self.shields_lvl = None
         self.perso_names = list()
 
     @commands.Cog.listener()
     async def on_ready(self):
         await self.get_data()
-        self.shields_lvl = list()
 
     async def get_data(self):
         cnx = self.bot.cnx

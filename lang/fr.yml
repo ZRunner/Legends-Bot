@@ -54,6 +54,7 @@ fr:
     command_disabled: "La commande %{cmd} est désactivée"
     command_in_dm: "La commande %{cmd} n'est pas autorisée en Messages Privés"
     convert: "Oups, impossible de convertir le paramètre `%{arg}` en type \"%{type}\" :confused:"
+    cooldown: Cette commande est en cooldown, vous devez attendre encore %{count} secondes !
     invalid: "`%{arg}` n'est pas une option valide pour %{opt}"
     member_not_found: "Impossible de trouver le membre %{member} :confused:"
     missing_argument: "Oups, il manque l'argument \"%{arg}\""
@@ -91,3 +92,35 @@ fr:
   stats:
     general: "**Nombre de serveurs :** {}\n**Nombre de membres visibles :** {} ({} bots)\n**Nombre de lignes de code :** {}\n**Version de Python :** {}\n**Version de la bibliothèque `discord.py` :** {}\n**Charge sur la mémoire vive :** {} GB\n**Charge sur le CPU :** {} %\n**Temps de latence de l'api :** {} ms"
     title: "Statistiques du bot"
+  time:
+    months:
+      - janvier
+      - février
+      - mars
+      - avril
+      - mai
+      - juin
+      - juillet
+      - août
+      - septembre
+      - octobre
+      - novembre
+      - décembre
+    year:
+      one: an
+      many: ans
+    month:
+      one: mois
+      many: mois
+    day:
+      one: jour
+      many: jours
+    hour:
+      one: heure
+      many: heures
+    minute:
+      one: minute
+      many: minutes
+    second:
+      one: seconde
+      many: secondes

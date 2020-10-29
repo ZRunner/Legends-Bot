@@ -7,7 +7,7 @@ t1=time.time()
 #Here we import some libs
 def check_libs():
     count = 0
-    for m in ["mysql","discord","psutil","requests"]:
+    for m in ["mysql","discord","psutil","requests","i18n"]:
         try:
             exec("import "+m)
             exec("del "+m)
@@ -160,21 +160,20 @@ def main():
         if count >0:
             raise Exception("\n{} modules not loaded".format(count))
     del count
-    utilities = client.cogs["UtilitiesCog"]
 
     async def on_ready():
-        await utilities.count_lines_code()
-        await utilities.print2('\nBot connecté')
-        await utilities.print2("Nom : "+client.user.name)
-        await utilities.print2("ID : "+str(client.user.id))
+        await client.get_cog("UtilitiesCog").count_lines_code()
+        print('\nBot connecté')
+        print("Nom : "+client.user.name)
+        print("ID : "+str(client.user.id))
         serveurs = []
         for i in client.guilds:
             serveurs.append(i.name)
         ihvbsdi="Connecté sur ["+str(len(client.guilds))+"] "+", ".join(serveurs)
-        await utilities.print2(ihvbsdi)
-        await utilities.print2(time.strftime("%d/%m  %H:%M:%S"))
-        await utilities.print2("Prêt en {}s".format(round(time.time()-t1,3)))
-        await utilities.print2('------')
+        print(ihvbsdi)
+        print(time.strftime("%d/%m  %H:%M:%S"))
+        print("Prêt en {}s".format(round(time.time()-t1,3)))
+        print('------')
         await asyncio.sleep(3)
         await client.change_presence(activity=discord.Game(name="baaatttle!"))
 

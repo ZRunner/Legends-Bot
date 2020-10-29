@@ -1,4 +1,5 @@
 import i18n
+import discord
 from discord.ext import commands
 
 
@@ -18,10 +19,16 @@ class LangCog(commands.Cog):
 
     async def tr(self, ctx, key, **kwargs):
         """Translate something"""
-        if ctx.guild:
+        lang = self.languages[0]
+        if isinstance(ctx, commands.Context):
+            if ctx.guild:
+                lang = self.languages[await self.get_lang(ctx.guild.id)]
+        elif isinstance(ctx, discord.Guild):
+            lang = self.languages[await self.get_lang(ctx.id)]
+        elif isinstance(ctx, discord.abc.GuildChannel):
             lang = self.languages[await self.get_lang(ctx.guild.id)]
-        else:
-            lang = self.languages[0]
+        elif isinstance(ctx, str) and ctx in self.languages:
+            lang = ctx
         return i18n.t(key, locale=lang, **kwargs)
 
 

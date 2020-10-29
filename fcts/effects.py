@@ -15,7 +15,10 @@ class EffectsCog(commands.Cog):
             'poison':self.poison,
             'bleeding':self.bleeding,
             'critical_bonus':self.critical,
-            'attack_bonus':self.attack
+            'attack_bonus':self.attack,
+            'shield_bonus':self.shield_bonus,
+            'shield_malus':self.shield_malus,
+            'invisibility':self.invisibility
             # 'Guerrier imbattable':self.p_1,
             # 'Pistolet à portails':self.p_2,
             # 'Espiègle et rusé':self.p_3,
@@ -99,6 +102,29 @@ class EffectsCog(commands.Cog):
             self.value = bonus
             self.type = _type
             self.fusion = False
+        
+        async def execute(self, perso: Perso):
+            return
+    
+    class shield_bonus(Effect):
+        def __init__(self, duration=1):
+            super().__init__("shield_bonus", None, duration, positive=True, event="end_turn")
+            self.fusion = False
+        
+        async def execute(self, perso: Perso):
+            return
+    
+    class shield_malus(Effect):
+        def __init__(self, duration=1):
+            super().__init__("shield_malus", None, duration, positive=False, event="end_turn")
+            self.fusion = False
+        
+        async def execute(self, perso: Perso):
+            return
+    
+    class invisibility(Effect):
+        def __init__(self, duration=1):
+            super().__init__("invisibility", 639951219254624267, duration, positive=True, event="end_turn")
         
         async def execute(self, perso: Perso):
             return

@@ -28,7 +28,7 @@ class ErrorsCog(commands.Cog):
                 await ctx.send(await self.bot._(ctx, 'error.missing_perms', perms=perms))
             return
         elif isinstance(error,commands.CommandOnCooldown):
-            await ctx.send("Cette commande est en cooldown, vous devez attendre encore {} secondes !".format(round(error.retry_after,2)))
+            await ctx.send(await self.bot._(ctx, 'error.cooldown', count=round(error.retry_after,2)))
             return
         elif isinstance(error,(commands.BadArgument,commands.BadUnionArgument)):
             # Could not convert "limit" into int. OR Converting to "int" failed for parameter "number".
@@ -64,9 +64,9 @@ class ErrorsCog(commands.Cog):
             try:
                 await ctx.send(await self.bot._(ctx, 'error.unexpected_error'))
             except:
-                print("[on_cmd_error] Impossible d'envoyer l'erreur dans le salon {}".format(ctx.channel.id))
+                self.bot.log.warn("[on_cmd_error] Impossible d'envoyer l'erreur dans le salon {}".format(ctx.channel.id))
         # All other Errors not returned come here... And we can just print the default TraceBack.
-        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        self.bot.log.info('Ignoring exception in command {}:'.format(ctx.command))
         #traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
         await self.on_error(error,ctx)
 

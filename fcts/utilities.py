@@ -28,23 +28,15 @@ class UtilitiesCog(commands.Cog):
                        'bleed': 640580514012463141,
                        'poison': 680872153872334849,
                        'att_boost': 640580485415698452,
-                       'att_less': 640580460249874491}
+                       'att_less': 640580460249874491,
+                       'shield_less': 763084759298474044,
+                       'energy': 765896121917636629}
         self.config = self.get_bot_infos()
 
     async def get_emoji(self, name):
         if name not in self.emojis.keys():
             return None
         return self.bot.get_emoji(self.emojis[name])
-
-    async def print2(self, text):
-        try:
-            print(text)
-        except UnicodeEncodeError:
-            text = await self.anti_code(str(text))
-            try:
-                print(text)
-            except UnicodeEncodeError:
-                print(text.encode("ascii", "ignore").decode("ascii"))
 
     async def anti_code(self, text):
         if type(text) == str:
