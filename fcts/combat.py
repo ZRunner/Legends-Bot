@@ -119,7 +119,7 @@ class CombatCog(commands.Cog):
                 lvl = await self.bot.get_cog("UtilitiesCog").calc_level(p['xp'])
                 life = await self.bot.cogs['PersosCog'].calc_life(data, lvl)
                 esq = (await self.bot.cogs['ClassesCog'].get_class(data['Class']))['Escape']
-                l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=lvl,at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,esquive=esq,Type=data['Type'],passifType=data['type_passif']))
+                l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=lvl,at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,dodge=esq,Type=data['Type'],passifType=data['type_passif']))
             Team1 = Team(user=ctx.author,players=l)
             # Création de l'équipe 2
             l = list()
@@ -128,7 +128,7 @@ class CombatCog(commands.Cog):
                 lvl = await self.bot.get_cog("UtilitiesCog").calc_level(p['xp'])
                 life = await self.bot.cogs['PersosCog'].calc_life(data,lvl)
                 esq = (await self.bot.cogs['ClassesCog'].get_class(data['Class']))['Escape']
-                l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=lvl,at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,esquive=esq,Type=data['Type'],passifType=data['type_passif']))
+                l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=lvl,at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,dodge=esq,Type=data['Type'],passifType=data['type_passif']))
             Team2 = Team(user=user,players=l)
             # Référencement des équipes l'une dans l'autre
             for p in Team1.players:
@@ -193,7 +193,7 @@ class CombatCog(commands.Cog):
         f1_v= await self.bot._(ctx, 'combat.embed.history')
         f1_k= await self.bot._(ctx, 'combat.embed.beginning')
         loading = await self.bot._(ctx, 'combat.embed.loading')
-        emb = self.bot.cogs['EmbedCog'].Embed(title=title,desc=desc,color=self.bot.cogs['Commands'].embed_color,fields=[{'name':f1_v,'value':f1_k},{'name':loading,'value':'None'},{'name':loading,'value':'None'},{'name':loading,'value':loading}])
+        emb = self.bot.cogs['EmbedCog'].Embed(title=title,desc=desc,color=self.bot.cogs['Commands'].embed_color,fields=[{'name':f1_v,'value':f1_k},{'name':loading,'value':'None'},{'name':'\u200b','value':'\u200b'},{'name':loading,'value':'None'},{'name':'\u200b','value':'\u200b'},{'name':loading,'value':loading}])
         msg = None
         result = str()
         need_update = True
@@ -230,6 +230,7 @@ class CombatCog(commands.Cog):
             await self.apply_effects(perso)
             # l'utilisateur choisit l'action, et on l'exécute
             action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team1.user), perso)
+            await perso.effects.execute(perso, 'instant')
             if action == 'pass':
                 perso.points += 2
             elif need_update or action == "freeze":
@@ -252,6 +253,7 @@ class CombatCog(commands.Cog):
             await self.apply_effects(perso)
             # l'utilisateur choisit l'action, et on l'exécute
             action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team2.user), perso)
+            await perso.effects.execute(perso, 'instant')
             if action == 'pass':
                 perso.points += 2
             elif need_update or action == "freeze":
@@ -264,8 +266,10 @@ class CombatCog(commands.Cog):
             
             Team2.rounds += 1 # incr"mentation du nombre de tours
 
+        winner = Team1 if Team2.lost else Team2
+        await self.add_history(emb, await self.bot._(ctx, 'combat.embed.winner', user=winner.user))
         await self.update_status(ctx, emb, Team1, Team2)
-        del emb.fields[3]
+        del emb.fields[-1]
         # if msg != None:
         #     await msg.delete()
         # msg = await ctx.send(embed=emb)
@@ -299,7 +303,7 @@ class CombatCog(commands.Cog):
                 shield_boosts[0] += 1
             elif e.name == "shield_malus":
                 shield_boosts[1] += 1
-            elif e.emoji:
+            elif e.emoji and e.duration > 0:
                 emoji = e.emoji if isinstance(e.emoji, str) else str(self.bot.get_emoji(e.emoji))
                 text += '{}**|** {} {}'.format(emojis['none'], emoji, e.duration)
             else:
@@ -333,17 +337,29 @@ class CombatCog(commands.Cog):
         shield_less = str(await get_emoji('shield_less'))
         energy = str(await get_emoji('energy'))
         emb.fields[1]['name'] = await self.bot._(ctx, 'combat.embed.team', user=Team1.user.display_name)
-        text = ""
+        text = list()
         emojis_map = {'life':life_emoji,'none':none_emoji,'effect':effect_emoji,'invisible':invisible_emoji,'ko':ko_emoji, 'blood':blood_emoji,'poison':poison_emoji, 'att_boost':att_boost, 'att_less':att_less, 'shield_less': shield_less, 'energy': energy}
         for p in Team1.players:
-            text += "\n"+await self.create_perso_status(p,emojis_map)
-        emb.fields[1]['value'] = text[:1024]
+            text.append(await self.create_perso_status(p,emojis_map))
+        if len("\n".join(text)) > 1024:
+            m = len(text)//2 + 1
+            emb.fields[1]['value'] = "\n".join(text[:m])
+            emb.fields[2]['value'] = "\n".join(text[m:])
+        else:
+            emb.fields[1]['value'] = "\n".join(text)
+            emb.fields[2]['value'] = '\u200b'
 
-        emb.fields[2]['name'] = await self.bot._(ctx, 'combat.embed.team', user=Team2.user.display_name)
-        text = ""
+        emb.fields[3]['name'] = await self.bot._(ctx, 'combat.embed.team', user=Team2.user.display_name)
+        text.clear()
         for p in Team2.players:
-            text += "\n"+await self.create_perso_status(p,emojis_map)
-        emb.fields[2]['value'] = text[:1024]
+            text.append(await self.create_perso_status(p,emojis_map))
+        if len("\n".join(text)) > 1024:
+            m = len(text)//2 +1 
+            emb.fields[3]['value'] = "\n".join(text[:m])
+            emb.fields[4]['value'] = "\n".join(text[m:])
+        else:
+            emb.fields[3]['value'] = "\n".join(text)
+            emb.fields[4]['value'] = '\u200b'
 
     async def ask_action(self, msg, emb, perso, player) -> str:
         """Demande à un joueur de choisir une action"""
@@ -366,7 +382,7 @@ class CombatCog(commands.Cog):
         if True:
             emojis.append('🏃')
             attaques += await self.bot._(msg.channel, 'combat.attacks.pass', e='🏃')
-        emb.fields[3] = {'name':await self.bot._(msg.channel, 'combat.embed.choose', user=player.display_name, perso=perso.name),'value':attaques,'inline':False}
+        emb.fields[5] = {'name':await self.bot._(msg.channel, 'combat.embed.choose', user=player.display_name, perso=perso.name),'value':attaques,'inline':False}
         await msg.edit(embed=emb)
         for x in emojis:
             await msg.add_reaction(x)
