@@ -48,6 +48,7 @@ fr:
       team: "Equipe de %{user}"
       loading: Chargement...
       choose: "**%{user}**, choisissez l'action de %{perso}"
+      winner: "L'équipe de %{user} remporte le combat !"
   config:
     new_lang: Le bot est passé en français !
   error:

@@ -47,7 +47,8 @@ en:
       beginning: Start of the fight
       team: "Team of %{user}"
       loading: Loading...
-      choose: "**%{user}**, please choose the action of %{perso}"    
+      choose: "**%{user}**, please choose the action of %{perso}"   
+      winner: "The %{user} team wins the fight!"
   config:
     new_lang: The bot is now in English!
   error:
