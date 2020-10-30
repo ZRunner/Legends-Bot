@@ -54,9 +54,9 @@ class Effects:
 
     def add(self, effect):
         """Add an effect to a character"""
-        match = self.get(effect.name)
+        match = self.get_one(effect.name)
         # effect.duration += 1
-        if match and effect.fusion:
+        if effect.fusion and match:
             match.duration = max(match.duration, effect.duration)
         else:
             self.array.append(effect)
