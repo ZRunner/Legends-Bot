@@ -14,6 +14,11 @@ class Team:
             self._nbr = 0
         self._nbr += 1
         return self._nbr-1
+    
+    @property
+    def lost(self) -> bool:
+        """if everyone died"""
+        return len([1 for x in self.players if x.life[0] > 0]) == 0
 
     def __str__(self):
         return '<Team  user="{}"  players=[{}]  rounds={}>'.format(self.user, ", ".join([str(x) for x in self.players]), self.rounds)
@@ -55,7 +60,6 @@ class Effects:
     def add(self, effect):
         """Add an effect to a character"""
         match = self.get_one(effect.name)
-        # effect.duration += 1
         if effect.fusion and match:
             match.duration = max(match.duration, effect.duration)
         else:
@@ -90,7 +94,7 @@ class Effects:
 
 class Perso:
     """General class for a character"""
-    def __init__(self, name, classe, lvl, at1, at2, ult, pas, life, esquive, Type, passifType):
+    def __init__(self, name, classe, lvl, at1, at2, ult, pas, life, dodge, Type, passifType):
         self.name = name
         self.classe = classe
         self.lvl = lvl
@@ -103,21 +107,22 @@ class Perso:
         self.life = [life, life]  # [actuel, max]
         self.effects = Effects()
         self.initialized = False
-        self.esquive = esquive  # donner/enlever 20-40 à chaque fois
+        # self.esquive = esquive  # donner/enlever 20-40 à chaque fois
         self.thorny = False
         self.type = Type
         self.provocation_coef = 1
         self.passifType = passifType
         self.Team1: Team  # sa propre équipe
         self.Team2: Team  # équipe adverse
-        self._critical = 10
+        self._critical_base = 10
+        self._dodge_base = dodge
 
     @property
     def critical(self) -> int:
         bonuses = self.effects.get('critical_bonus')
         if bonuses is None:
-            return self._critical
-        return self._critical + sum([x.value for x in bonuses])
+            return self._critical_base
+        return self._critical_base + sum([x.value for x in bonuses])
     
     @property
     def shield_boost(self) -> int:
@@ -128,6 +133,15 @@ class Perso:
         temp = self.effects.get('shield_malus')
         bonuses -= 0 if temp is None else b[len(temp)-1]
         return bonuses
+    
+    @property
+    def dodge(self) -> int:
+        bonuses = self.effects.get('dodge_bonus')
+        if bonuses is None:
+            return self._dodge_base
+        b = max(-self._dodge_base, sum([x.value*15 for x in bonuses]))
+        b = min(30, b)
+        return self._dodge_base + b
     
     @property
     def invisible(self) -> bool:

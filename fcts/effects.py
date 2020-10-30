@@ -19,7 +19,8 @@ class EffectsCog(commands.Cog):
             'shield_bonus':self.shield_bonus,
             'shield_malus':self.shield_malus,
             'invisibility':self.invisibility,
-            'frozen':self.frozen
+            'frozen':self.frozen,
+            'dodge_bonus':self.dodge
             # 'Guerrier imbattable':self.p_1,
             # 'Pistolet à portails':self.p_2,
             # 'Espiègle et rusé':self.p_3,
@@ -52,7 +53,7 @@ class EffectsCog(commands.Cog):
 
     class blessing(Effect):
         def __init__(self, duration=1):
-            super().__init__("blessing", "✨", duration, True)
+            super().__init__("blessing", "✨", duration, True, event='instant')
 
         async def execute(self, perso: Perso):
             perso.effects.array = [x for x in perso.effects.array if x.positive]
@@ -108,7 +109,7 @@ class EffectsCog(commands.Cog):
     
     class shield_bonus(Effect):
         def __init__(self, duration=1):
-            super().__init__("shield_bonus", None, duration, positive=True, event="end_turn")
+            super().__init__("shield_bonus", None, duration, positive=True)
             self.fusion = False
         
         async def execute(self, perso: Perso):
@@ -116,7 +117,7 @@ class EffectsCog(commands.Cog):
     
     class shield_malus(Effect):
         def __init__(self, duration=1):
-            super().__init__("shield_malus", None, duration, positive=False, event="end_turn")
+            super().__init__("shield_malus", None, duration, positive=False)
             self.fusion = False
         
         async def execute(self, perso: Perso):
@@ -124,17 +125,27 @@ class EffectsCog(commands.Cog):
     
     class invisibility(Effect):
         def __init__(self, duration=1):
-            super().__init__("invisibility", 639951219254624267, duration, positive=True, event="end_turn")
+            super().__init__("invisibility", 639951219254624267, duration, positive=True)
         
         async def execute(self, perso: Perso):
             return
     
     class frozen(Effect):
         def __init__(self, duration=1):
-            super().__init__("frozen", '❄', duration+1, positive=False, event="end_turn")
+            super().__init__("frozen", '❄', duration+1, positive=False)
         
         async def execute(self, perso: Perso):
             return
+    
+    class dodge(Effect):
+        def __init__(self, duration=1, bonus=1):
+            """bonus = 1 if bonus, -1 if malus"""
+            if bonus not in (1, -1):
+                raise ValueError
+            emoji = 640586268585099272 if bonus==1 else 640586246564872204
+            super().__init__("dodge_bonus", emoji, duration, positive=(bonus>0))
+            self.value = bonus
+            self.fusion = False
 
 
     async def p_1(self,perso):
@@ -143,14 +154,16 @@ class EffectsCog(commands.Cog):
             for target in perso.Team1.players:
                 target.attack_bonus += 0.3
                 if target==perso:
-                    target.esquive = min(0,target.esquive-3)
+                    pass
+                    # target.esquive = min(0,target.esquive-3)
         perso.initialized = True
     
     async def p_2(self,perso):
         """Pistolet à portails"""
         if not perso.initialized:
             for target in perso.Team1.players:
-                target.esquive += 5
+                pass
+                # target.esquive += 5
         perso.initialized = True
     
     async def p_3(self,perso):
@@ -168,7 +181,7 @@ class EffectsCog(commands.Cog):
     async def p_5(self,perso):
         """Discrétion surnaturelle"""
         if not perso.initialized:
-            perso.esquive = 14
+            # perso.esquive = 14
             perso.initialized = True
 
     async def p_6(self,perso):
@@ -181,7 +194,8 @@ class EffectsCog(commands.Cog):
         """Danger silencieux"""
         if not perso.initialized:
             for target in perso.Team2.players:
-                target.esquive -= 3
+                pass
+                # target.esquive -= 3
         perso.initialized = True
 
     async def p_10(self,perso):
@@ -194,7 +208,8 @@ class EffectsCog(commands.Cog):
         """Terreur nocturne"""
         if not perso.initialized:
             for target in perso.Team2.players:
-                target.esquive -= 4
+                pass
+                # target.esquive -= 4
         perso.initialized = True
     
     async def p_12(self,perso):
