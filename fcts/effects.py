@@ -18,7 +18,8 @@ class EffectsCog(commands.Cog):
             'attack_bonus':self.attack,
             'shield_bonus':self.shield_bonus,
             'shield_malus':self.shield_malus,
-            'invisibility':self.invisibility
+            'invisibility':self.invisibility,
+            'frozen':self.frozen
             # 'Guerrier imbattable':self.p_1,
             # 'Pistolet à portails':self.p_2,
             # 'Espiègle et rusé':self.p_3,
@@ -54,7 +55,6 @@ class EffectsCog(commands.Cog):
             super().__init__("blessing", "✨", duration, True)
 
         async def execute(self, perso: Perso):
-            perso.frozen = 0
             perso.effects.array = [x for x in perso.effects.array if x.positive]
 
     class fire(Effect):
@@ -125,6 +125,13 @@ class EffectsCog(commands.Cog):
     class invisibility(Effect):
         def __init__(self, duration=1):
             super().__init__("invisibility", 639951219254624267, duration, positive=True, event="end_turn")
+        
+        async def execute(self, perso: Perso):
+            return
+    
+    class frozen(Effect):
+        def __init__(self, duration=1):
+            super().__init__("frozen", '❄', duration+1, positive=False, event="end_turn")
         
         async def execute(self, perso: Perso):
             return

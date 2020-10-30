@@ -102,7 +102,6 @@ class Perso:
         self.points = random.randint(0, 5)
         self.life = [life, life]  # [actuel, max]
         self.effects = Effects()
-        self.frozen = 0
         self.initialized = False
         self.esquive = esquive  # donner/enlever 20-40 à chaque fois
         self.thorny = False
@@ -133,6 +132,10 @@ class Perso:
     @property
     def invisible(self) -> bool:
         return self.effects.get("invisibility") is not None
+    
+    @property
+    def frozen(self) -> bool:
+        return self.effects.get("frozen") is not None
 
     def attack_bonus(self, _type=None) -> int:
         bonuses = self.effects.get('attack_bonus')

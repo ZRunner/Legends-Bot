@@ -308,10 +308,6 @@ class CombatCog(commands.Cog):
             text += "{}**|** {} {}".format(emojis['none'],'🛡',shield_boosts[0])
         if shield_boosts[1] > 0:
             text += "{}**|** {} {}".format(emojis['none'],emojis['shield_less'],shield_boosts[1])
-        # if p.invisible > 0:
-        #     text += "{}**|** {} {}".format(emojis['none'],emojis['invisible'],p.invisible)
-        if p.frozen > 0:
-            text += "{}**|** {} {}".format(emojis['none'],':snowflake:',p.frozen)
         if attack_bonus > 0:
             text += "{}**|** {} {}".format(emojis['none'],emojis['att_boost'],attack_bonus)
         elif attack_bonus < 0:
@@ -351,8 +347,7 @@ class CombatCog(commands.Cog):
 
     async def ask_action(self, msg, emb, perso, player) -> str:
         """Demande à un joueur de choisir une action"""
-        if perso.frozen > 0:
-            perso.frozen -= 1
+        if perso.frozen:
             return 'frozen'
         if perso.life[0] == 0:
             return 'dead'

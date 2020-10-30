@@ -85,7 +85,7 @@ class AttacksCog(commands.Cog):
             await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
         if perso.passifType != 'G':
             await self.bot.cogs['CombatCog'].apply_one_passif(perso)
-        if random.randrange(100) < perso.esquive and perso.frozen == 0:
+        if random.randrange(100) < perso.esquive and not perso.frozen:
             return 0
         attack_boost = attacker.attack_bonus(perso.type)
         # print(perso.name, attack_boost)
@@ -209,7 +209,8 @@ class AttacksCog(commands.Cog):
         "Araignée géante"
         targets = await self.select_random_players(3,perso.Team2)
         points = await self.apply_dmg(targets[0],22,perso)
-        targets[1].frozen += 1
+        await self.add_effect(targets[1], 'frozen', 1)
+        # targets[1].frozen += 1
         await self.add_effect(targets[2],'poison',1)
         txt = "{p} appelle une araignée géante, qui fait {d}PV de dégâts sur {t[0]}, immobilise {t[1]} et empoisonne {t[2]} ! ".format(p=perso.name,t=[x.name for x in targets],d=points)
         return txt
@@ -426,7 +427,8 @@ class AttacksCog(commands.Cog):
         points = round(sum(points)/len(perso.Team2))
         targets = (await self.select_random_players(2,perso.Team2))
         if len(targets) > 0:
-            targets[0].frozen += 1
+            # targets[0].frozen += 1
+            await self.add_effect(targets[0], 'frozen', 1)
             if len(targets) > 1:
                 await self.add_effect(targets[1], 'bleeding', 2)
                 return "{p} lance une tempête affectant toute l'équipe ennemie, qui se retrouve avec {s} PV en moins ! La tempête gèle aussi {t} et blesse {t2}".format(p=perso.name,t=targets[0].name,s=points,t2=targets[1].name)
@@ -473,7 +475,8 @@ class AttacksCog(commands.Cog):
     async def c_17(self,perso):
         "Apparition terrifiante"
         target = await self.select_random_players(1,perso.Team2)
-        target[0].frozen += 1
+        # target[0].frozen += 1
+        await self.add_effect(target[0], 'frozen', 1)
         return "{p} apparaît brusquement devant {t}. Le pauvre appeuré est immobile pendant 1 tour".format(p=perso.name,t=target[0].name)
     
     async def u_17(self,perso):
