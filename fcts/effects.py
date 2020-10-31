@@ -70,7 +70,7 @@ class EffectsCog(commands.Cog):
     
     class poison(Effect):
         def __init__(self, duration=1):
-            super().__init__("poison", "🤢", duration)
+            super().__init__("poison", 680872153872334849, duration)
 
         async def execute(self, perso: Perso):
             lvl = perso.lvl
@@ -80,7 +80,7 @@ class EffectsCog(commands.Cog):
 
     class bleeding(Effect):
         def __init__(self, duration=1):
-            super().__init__("bleeding", "🩸", duration)
+            super().__init__("bleeding", 640580514012463141, duration)
 
         async def execute(self, perso: Perso):
             lvl = perso.lvl
