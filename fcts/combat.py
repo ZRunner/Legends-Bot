@@ -1,3 +1,4 @@
+from typing import Tuple
 from discord.ext import commands
 import discord
 import asyncio
@@ -30,6 +31,7 @@ class CombatCog(commands.Cog):
                 return msg.author == user and msg.channel == channel
             tries = 0
             choice = list()
+            msg = None
             while len(choice) != 5:
                 try:
                     choice_digits = list()
@@ -57,7 +59,8 @@ class CombatCog(commands.Cog):
                         await channel.send(await self.bot._(channel, 'combat.choice.missing-count'))
                         tries +=1
             await suppr(bot_msg)
-            await suppr(msg)
+            if msg:
+                await suppr(msg)
             return choice
         except Exception as e:
             await self.bot.cogs["ErrorsCog"].on_error(e,None)
@@ -169,10 +172,10 @@ class CombatCog(commands.Cog):
         except Exception as e:
             raise e
 
-    async def do_attack(self, ctx:commands.Context, action:str, perso:Perso) -> (str, str, bool):
+    async def do_attack(self, ctx:commands.Context, action:str, perso:Perso) -> Tuple[str, str, bool]:
         """Exécute une action"""
         did_something = False
-        await perso.effects.execute(perso, 'before_attack')
+        await perso.effects.execute(perso, 'before_action')
         if action=='pass':
             result = await self.bot._(ctx, 'combat.attacks.passed', user=perso.name)
         elif action=='frozen':
@@ -180,6 +183,7 @@ class CombatCog(commands.Cog):
         elif action=='dead':
             result = await self.bot._(ctx, 'combat.attacks.dead', user=perso.name)
         else:
+            await perso.effects.execute(perso, 'before_attack')
             result = await self.bot.cogs['AttacksCog'][action](perso)
             await perso.effects.execute(perso, 'after_attack')
             did_something = True
@@ -230,7 +234,7 @@ class CombatCog(commands.Cog):
             await self.apply_effects(perso)
             # l'utilisateur choisit l'action, et on l'exécute
             action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team1.user), perso)
-            await perso.effects.execute(perso, 'instant')
+            await perso.effects.execute(perso, 'after_action')
             if action == 'pass':
                 perso.points += 2
             elif need_update or action == "freeze":
@@ -239,7 +243,7 @@ class CombatCog(commands.Cog):
             await self.add_history(emb,result)
             # on enlève les effets thorny de l'équipe adverse
             for p in Team2.players:
-                p.thorny = False
+                await p.effects.execute(p, 'instant')
             
             Team1.rounds += 1 # incrémentation du nombre de tours
 
@@ -253,7 +257,7 @@ class CombatCog(commands.Cog):
             await self.apply_effects(perso)
             # l'utilisateur choisit l'action, et on l'exécute
             action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team2.user), perso)
-            await perso.effects.execute(perso, 'instant')
+            await perso.effects.execute(perso, 'after_action')
             if action == 'pass':
                 perso.points += 2
             elif need_update or action == "freeze":
@@ -262,9 +266,9 @@ class CombatCog(commands.Cog):
             await self.add_history(emb,result)
             # on enlève les effets thorny de l'équipe adverse
             for p in Team1.players:
-                p.thorny = False
+                await p.effects.execute(p, 'instant')
             
-            Team2.rounds += 1 # incr"mentation du nombre de tours
+            Team2.rounds += 1 # incrémentation du nombre de tours
 
         winner = Team1 if Team2.lost else Team2
         await self.add_history(emb, await self.bot._(ctx, 'combat.embed.winner', user=winner.user))
@@ -291,31 +295,25 @@ class CombatCog(commands.Cog):
         text = '{} ({}) : {} {}/{}'.format(p.name,p.classe,emojis['life'],life,p.life[1])
         text += '{}**|** {} {}'.format(emojis['none'], emojis['energy'], p.points)
         other_effects = list()
-        attack_bonus = 0
-        critic_bonus = 0
-        shield_boosts = [0, 0]
+        attack_bonus = p.attack_bonus()
+        critic_bonus = p.critical
+        shield_bonus = p.shield_boost
         for e in p.effects.array:
-            if e.name == "attack_bonus":
-                attack_bonus += e.value
-            elif e.name == "critic_bonus":
-                critic_bonus += e.value
-            elif e.name == "shield_bonus":
-                shield_boosts[0] += 1
-            elif e.name == "shield_malus":
-                shield_boosts[1] += 1
-            elif e.emoji and e.duration > 0:
+            if e.name in ('attack_bonus', 'critical_bonus', 'shield_bonus', 'shield_malus'):
+                continue
+            if e.emoji and e.duration > 0:
                 emoji = e.emoji if isinstance(e.emoji, str) else str(self.bot.get_emoji(e.emoji))
                 text += '{}**|** {} {}'.format(emojis['none'], emoji, e.duration)
             else:
                 other_effects.append(e.name)
-        if shield_boosts[0] > 0:
-            text += "{}**|** {} {}".format(emojis['none'],'🛡',shield_boosts[0])
-        if shield_boosts[1] > 0:
-            text += "{}**|** {} {}".format(emojis['none'],emojis['shield_less'],shield_boosts[1])
+        if shield_bonus > 0:
+            text += "{}**|** {} {}".format(emojis['none'],'🛡', shield_bonus)
+        if shield_bonus < 0:
+            text += "{}**|** {} {}".format(emojis['none'],emojis['shield_less'], shield_bonus)
         if attack_bonus > 0:
-            text += "{}**|** {} {}".format(emojis['none'],emojis['att_boost'],attack_bonus)
+            text += "{}**|** {} {}".format(emojis['none'],emojis['att_boost'], attack_bonus)
         elif attack_bonus < 0:
-            text += "{}**|** {} {}".format(emojis['none'],emojis['att_less'],attack_bonus)
+            text += "{}**|** {} {}".format(emojis['none'],emojis['att_less'], attack_bonus)
         if critic_bonus != 0:
             text += "{}**|** {} {}".format(emojis['none'],':anger:',critic_bonus)
         if len(other_effects)>0:
