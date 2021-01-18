@@ -1,6 +1,6 @@
 import random
 from discord.ext import commands
-from math import log, exp
+from math import log
 
 
 class AttacksCog(commands.Cog):
@@ -80,7 +80,7 @@ class AttacksCog(commands.Cog):
             damage = perso.life[0]
         return round(damage)
     
-    async def apply_dmg(self,perso,points:int,attacker,critic:bool=True) -> float:
+    async def apply_dmg(self, perso, points:int, attacker, critic:bool=True) -> float:
         if attacker.passifType != 'B':
             await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
         if perso.passifType != 'G':
@@ -91,7 +91,7 @@ class AttacksCog(commands.Cog):
         # print(perso.name, attack_boost)
         if attacker.passifType == 'B':
             await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
-        points += round(points * (attack_boost*0.25),1)
+        points += round(points * attack_boost,1)
         if critic and random.random() < await self.calc_critic(perso.lvl):
             points += round(random.randint(20,30)/100*points,1)
         damage = await self.attack_with_shield(perso,points)
@@ -101,6 +101,7 @@ class AttacksCog(commands.Cog):
             attacker.life[0] = max(0, attacker.life[0]-damage)
         if perso.passifType != 'H':
             await self.bot.cogs['CombatCog'].apply_one_passif(perso)
+        await perso.effects.execute(perso, 'after_defense')
         return round(points, None if int(points) == points else 1)
     
     async def calc_critic(self,level) -> float:
@@ -134,15 +135,21 @@ class AttacksCog(commands.Cog):
 
         players = list()
         IDs = list()
-        possible_players = [x for x in Team.players if not x.invisible and x.life[0]>0 and x!=avoid_player]
-        if has_type!=None:
+        possible_players = [x for x in Team.players if x.provocation]
+        if len(possible_players) > 0:
+            if has_type is not None:
+                possible_players = [x for x in possible_players if x.type==has_type]
+        if len(possible_players) == 0:
+            possible_players = [x for x in Team.players if not x.invisible and x.life[0]>0 and x!=avoid_player]
+        if has_type is not None:
             possible_players = [x for x in possible_players if x.type==has_type]
         len_targets = min(len(possible_players),nbr)
         tries = 30
         while len(players) < len_targets:
             if tries <= 0:
                 break
-            t = rdm_coef([x.provocation_coef for x in possible_players])
+            # t = rdm_coef([x.provocation_coef for x in possible_players])
+            t = random.choice(possible_players)
             if t >= len(Team.players) or Team.players[t] in players or t >= len(possible_players):
                 tries -= 1
                 continue
@@ -590,12 +597,13 @@ class AttacksCog(commands.Cog):
         targets = await self.select_random_players(2,perso.Team2)
         if len(targets)==0:
             return "{} n'a plus aucun adversaire à combattre !".format(perso.name)
+        points = 0
         for t in targets:
             points = await self.apply_dmg(t,10,perso)
-        txt = "{} attaque {} et {}, ce qui fait baisser leurs PV de {} points ".format(perso.name,targets[0].name,targets[1].name,points)
-        if points>10:
+        txt = "{} attaque {} et {}, ce qui fait baisser leurs PV de {} points ".format(perso.name,targets[0].name,targets[1].name, points)
+        if points > 10:
             txt += random.choice(self.critical)
-        elif points==0:
+        elif points == 0:
             txt += random.choice(self.escape)
         allys = await self.select_random_players(2,perso.Team1,avoid_player=perso)
         for a in allys+[perso]:

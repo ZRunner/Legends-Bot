@@ -9,8 +9,9 @@ class EffectsCog(commands.Cog):
         self.file = 'effects'
         self.fire_immunes = ['Dohvakiin']
         self.poison_immunes = ['Xénomorphe']
-        self.effects = {'regen': self.regen,
+        self.effects = {'regen': self.healing,
             'blessing': self.blessing,
+            'curse': self.curse,
             'fire': self.fire,
             'poison':self.poison,
             'bleeding':self.bleeding,
@@ -20,7 +21,8 @@ class EffectsCog(commands.Cog):
             'shield_malus':self.shield_malus,
             'invisibility':self.invisibility,
             'frozen':self.frozen,
-            'dodge_bonus':self.dodge
+            'dodge_bonus':self.dodge,
+            'provocation':self.provocation
             # 'Guerrier imbattable':self.p_1,
             # 'Pistolet à portails':self.p_2,
             # 'Espiègle et rusé':self.p_3,
@@ -44,7 +46,8 @@ class EffectsCog(commands.Cog):
             kwargs = {k:v for k,v in kwargs.items() if k in sign.parameters}
             perso.effects.add(self.effects[nom](duration, **kwargs))
 
-    class regen(Effect):
+    class healing(Effect):
+        """Soigne de 15% les PV du personnage."""
         def __init__(self, duration=1):
             super().__init__("regen", "❤️", duration, True)
 
@@ -52,13 +55,23 @@ class EffectsCog(commands.Cog):
             perso.life[0] = min(perso.life[1], perso.life[0]+perso.life[1]*0.15)
 
     class blessing(Effect):
+        """Retire les effets négatifs (Fire, Poison, Bleed, Freeze, Attack Penalty, Shield Penalty, Esquive Penalty)."""
         def __init__(self, duration=1):
-            super().__init__("blessing", "✨", duration, True, event='instant')
+            super().__init__("blessing", "✨", duration, True, event='after_action')
 
         async def execute(self, perso: Perso):
             perso.effects.array = [x for x in perso.effects.array if x.positive]
 
+    class curse(Effect):
+        """Retire les effets positifs (Attack Boost, Contre-attaque, Shield, Esquive Boost, Invisible, Provocation)."""
+        def __init__(self, duration=1):
+            super().__init__("curse", "✨", duration, True, event='after_action')
+
+        async def execute(self, perso: Perso):
+            perso.effects.array = [x for x in perso.effects.array if not x.positive]
+
     class fire(Effect):
+        """8 de dégâts, dure 1 tour. Non cumulable."""
         def __init__(self, duration=1):
             super().__init__("fire", "🔥", duration)
         
@@ -67,8 +80,9 @@ class EffectsCog(commands.Cog):
             perso.life[0] -= round((lvl**1.85)/80 + 2*log(lvl+1))
             if perso.life[0] < 0:
                 perso.life[0] = 0
-    
+
     class poison(Effect):
+        """5 de dégâts, dure 2 tours. Non cumulable."""
         def __init__(self, duration=1):
             super().__init__("poison", 680872153872334849, duration)
 
@@ -79,6 +93,7 @@ class EffectsCog(commands.Cog):
                 perso.life[0] = 0
 
     class bleeding(Effect):
+        """6 de dégâts, dure 1 tour. 2 cumulables."""
         def __init__(self, duration=1):
             super().__init__("bleeding", 640580514012463141, duration)
 
@@ -96,8 +111,9 @@ class EffectsCog(commands.Cog):
         
         async def execute(self, perso: Perso):
             return
-    
+
     class attack(Effect):
+        """Augmente les dégâts de 20%. Peut être cumulé une seconde fois, mais à seulement 15% (donc un total de 35% de dégâts en plus). Idem en Penalty, en réduisant les dégâts infligés."""
         def __init__(self, duration=1, bonus=1, _type=None):
             super().__init__("attack_bonus", None, duration, positive=(bonus>0), event="after_attack")
             self.value = bonus
@@ -106,38 +122,43 @@ class EffectsCog(commands.Cog):
         
         async def execute(self, perso: Perso):
             return
-    
+
     class shield_bonus(Effect):
+        """Réduit les dégâts reçus de 20%/30%/40%/45%/50%. Cumulable 5 fois."""
         def __init__(self, duration=1):
             super().__init__("shield_bonus", None, duration, positive=True)
             self.fusion = False
         
         async def execute(self, perso: Perso):
             return
-    
+
     class shield_malus(Effect):
+        """Augmente les dégâts reçus de 20%/30%. Cumulable 2 fois."""
         def __init__(self, duration=1):
             super().__init__("shield_malus", None, duration, positive=False)
             self.fusion = False
         
         async def execute(self, perso: Perso):
             return
-    
+
     class invisibility(Effect):
+        """Met l'esquive à 100, ignorant les malus d'esquive. Non cumulable. Exclusif à la Cu des Espions."""
         def __init__(self, duration=1):
             super().__init__("invisibility", 639951219254624267, duration, positive=True)
         
         async def execute(self, perso: Perso):
             return
-    
+
     class frozen(Effect):
+        """Esquive à 0, empêche le personnage de participer à son prochain tour. Non cumulable."""
         def __init__(self, duration=1):
-            super().__init__("frozen", '❄', duration+1, positive=False)
+            super().__init__("frozen", '❄', duration, positive=False, event="after_action")
         
         async def execute(self, perso: Perso):
             return
-    
+
     class dodge(Effect):
+        """Apporte 15 points d'esquive en plus. 2 cumulables (pour un total de 30 points d'esquive en plus). Idem en Penalty, mais bloquera à 0 évidemment."""
         def __init__(self, duration=1, bonus=1):
             """bonus = 1 if bonus, -1 if malus"""
             if bonus not in (1, -1):
@@ -146,6 +167,25 @@ class EffectsCog(commands.Cog):
             super().__init__("dodge_bonus", emoji, duration, positive=(bonus>0))
             self.value = bonus
             self.fusion = False
+        
+        async def execute(self, perso: Perso):
+            return
+
+    class provocation(Effect):
+        """Oblige les ennemis à attaquer le personnage ayant cet effet. Exclusif aux Tanks."""
+        def __init__(self, duration=1):
+            super().__init__("provocation", 772086308881039371, duration, positive=True)
+        
+        async def execute(self, perso: Perso):
+            return
+
+    class thorny(Effect):
+        """Si attaqué lorsqu'il possède cet effet, le personnage infligera 25% de ses points d'attaque à l'attaquant. Cela consomme l'effet. Non cumulable."""
+        def __init__(self, duration=1):
+            super().__init__("thorny", 772095039903498240, duration, positive=True, event="after_defense")
+        
+        async def execute(self, perso: Perso):
+            return
 
 
     async def p_1(self,perso):

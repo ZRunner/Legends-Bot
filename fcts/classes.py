@@ -108,9 +108,7 @@ class Perso:
         self.effects = Effects()
         self.initialized = False
         # self.esquive = esquive  # donner/enlever 20-40 à chaque fois
-        self.thorny = False
         self.type = Type
-        self.provocation_coef = 1
         self.passifType = passifType
         self.Team1: Team  # sa propre équipe
         self.Team2: Team  # équipe adverse
@@ -136,33 +134,64 @@ class Perso:
     
     @property
     def dodge(self) -> int:
+        if self.frozen:
+            return 0
+        if self.invisible:
+            return 100
         bonuses = self.effects.get('dodge_bonus')
         if bonuses is None:
             return self._dodge_base
+        # can't be lower than opposite of base (so 0)
         b = max(-self._dodge_base, sum([x.value*15 for x in bonuses]))
+        # can't be higher than 30 (so base+30)
         b = min(30, b)
         return self._dodge_base + b
     
     @property
     def invisible(self) -> bool:
         return self.effects.get("invisibility") is not None
-    
+
     @property
     def frozen(self) -> bool:
         return self.effects.get("frozen") is not None
+    
+    @property
+    def thorny(self) -> bool:
+        return self.effects.get("thorny") is not None
+
+    @property
+    def provocation(self) -> bool:
+        if self.invisible:
+            return False
+        return self.classe == "Tank" and self.effects.get("provocation") is not None
 
     def attack_bonus(self, _type=None) -> int:
         bonuses = self.effects.get('attack_bonus')
         if bonuses is None:
             return 0
-        return sum([x.value for x in bonuses if x.type in (None, _type)])
+        val = sum([x.value for x in bonuses if x.type in (None, _type)])
+        b = (0, 20, 35)
+        if val > 0:
+            return b[min(val, 2)]
+        else:
+            return b[min(-val, 2)]
 
     def __str__(self):
         return '<Perso  name="{}"  classe="{}"  xp={} effects={}>'.format(self.name, self.classe, self.xp, len(self.effects.array))
 
 
 class Effect:
-    """The base effect type for all used effects"""
+    """The base effect type for all used effects
+    
+    Event types
+    -----------
+    end_turn: right before choosing an action
+    before_action: between the action choice and the action execution
+    before_attack: right before the action, if it is an attack
+    after_attack: right after the action, if it was an attack
+    after_action: right after any action
+    instant: after any action of any opposite player
+    after_defense: right after undergoing an attack"""
     def __init__(self, name: str, emoji: str = None, duration: int = 1, positive: bool = False, event: str = "end_turn"):
         self.name = name
         self.emoji = emoji
