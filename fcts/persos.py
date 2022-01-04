@@ -1,9 +1,4 @@
-import discord
-import sys
-import traceback
-import random
-from discord.ext import commands
-from math import log, exp
+from nextcord.ext import commands
 
 
 class ClassesCog(commands.Cog):

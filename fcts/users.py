@@ -1,5 +1,5 @@
-import discord, sys, traceback, random
-from discord.ext import commands
+import random
+from nextcord.ext import commands
 
 class UsersCog(commands.Cog):
 

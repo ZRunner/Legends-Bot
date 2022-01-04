@@ -91,7 +91,7 @@ fr:
     persons: "Ces personnages sont %{people}.\nVous pouvez entrer `%{p}deck` pour voir la liste de vos personnages, et `%{p}help` pour la liste des commandes disponibles. Bonne chance !"
     welcome: "Bienvenue %{user} dans l'aventure !\nPour que vous commenciez avec de bonnes bases, nous vous avons donné au hasard 5 personnages."
   stats:
-    general: "**Nombre de serveurs :** {}\n**Nombre de membres visibles :** {} ({} bots)\n**Nombre de lignes de code :** {}\n**Version de Python :** {}\n**Version de la bibliothèque `discord.py` :** {}\n**Charge sur la mémoire vive :** {} GB\n**Charge sur le CPU :** {} %\n**Temps de latence de l'api :** {} ms"
+    general: "**Nombre de serveurs :** {}\n**Nombre de membres visibles :** {} ({} bots)\n**Nombre de lignes de code :** {}\n**Version de Python :** {}\n**Version de la bibliothèque `nextcord.py` :** {}\n**Charge sur la mémoire vive :** {} GB\n**Charge sur le CPU :** {} %\n**Temps de latence de l'api :** {} ms"
     title: "Statistiques du bot"
   time:
     months:

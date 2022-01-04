@@ -1,7 +1,6 @@
-import discord
 import datetime
 import time
-from discord.ext import commands
+from nextcord.ext import commands
 
 
 # months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin",

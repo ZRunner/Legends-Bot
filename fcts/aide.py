@@ -1,5 +1,5 @@
-import discord, re, inspect
-from discord.ext import commands
+import nextcord, re, inspect
+from nextcord.ext import commands
 
 class HelpCog(commands.Cog):
 
@@ -16,7 +16,7 @@ class HelpCog(commands.Cog):
     
     @commands.command(name="help")
     @commands.cooldown(1,5,commands.BucketType.user)
-    async def help_cmd(self,ctx,*commands : str):
+    async def help_cmd(self, ctx: commands.Context,*commands : str):
         """Obtenir de l'aide sur une commande"""
         try:
             if len(commands) == 0:
@@ -31,7 +31,7 @@ class HelpCog(commands.Cog):
                 await self._default_help_command(ctx,commands)
 
 
-    async def help_command(self, ctx, commands=()):
+    async def help_command(self, ctx: commands.Context, commands=()):
         """Main command for the creation of the help message
 If the bot can't send the new command format, it will try to send the old one. Enable "Embed Links" permission for better rendering."""
         if self.send_in_dm:
@@ -78,15 +78,15 @@ If the bot can't send the new command format, it will try to send the old one. E
                     return
             pages = await self.cmd_help(ctx,command)
 
-        me = destination.me if type(destination)==discord.DMChannel else destination.guild.me
+        me = destination.me if type(destination)==nextcord.DMChannel else destination.guild.me
         ft = await self.bot._(ctx, 'help.more_info', p=ctx.prefix)
         if destination.permissions_for(me).embed_links:
             for page in pages:
                 embed = self.bot.cogs["EmbedCog"].Embed(desc=page,footer_text=ft.format(await self.bot.get_prefix(ctx.message)),fields=[]).update_timestamp().discord_embed()
                 if ctx.guild != None:
-                    embed.colour = ctx.guild.me.color if ctx.guild.me.color != discord.Colour(16295964).default() else discord.Colour(16295964)
+                    embed.colour = ctx.guild.me.color if ctx.guild.me.color != nextcord.Colour(16295964).default() else nextcord.Colour(16295964)
                 else:
-                    embed.colour = discord.Colour(16295964)
+                    embed.colour = nextcord.Colour(16295964)
                 await destination.send(embed=embed)
         else:
             for page in pages:
@@ -103,7 +103,7 @@ If the bot can't send the new command format, it will try to send the old one. E
     def sort_by_name(self,cmd):
             return cmd.name
 
-    async def all_commands(self, ctx):
+    async def all_commands(self, ctx: commands.Context):
         """Create pages for every bot command"""        
         cmds = sorted([c for c in ctx.bot.commands],key=self.sort_by_name)
         helpmsg = ""
@@ -112,7 +112,7 @@ If the bot can't send the new command format, it will try to send the old one. E
                 if (await cmd.can_run(ctx))==False or cmd.hidden==True or cmd.enabled==False:
                     continue
             except Exception as e:
-                if not "discord.ext.commands.errors" in str(type(e)):
+                if not "nextcord.ext.commands.errors" in str(type(e)):
                     await ctx.send("`Error:` {}".format(e))
                     await self.bot.cogs['ErrorsCog'].on_error(e,ctx)
                     return []
@@ -127,7 +127,7 @@ If the bot can't send the new command format, it will try to send the old one. E
         title = await self.bot._(ctx, 'help.cmds_list')
         return ["__**{}**__\n{}".format(title, helpmsg)]
 
-    async def cog_commands(self, ctx, cog):
+    async def cog_commands(self, ctx: commands.Context, cog):
         """Create pages for every command of a cog"""
         description = inspect.getdoc(cog)
         page = ""
@@ -141,7 +141,7 @@ If the bot can't send the new command format, it will try to send the old one. E
                 if (await cmd.can_run(ctx))==False or cmd.hidden==True or cmd.enabled==False or cmd.cog_name != cog_name:
                     continue
             except Exception as e:
-                if not "discord.ext.commands.errors" in str(type(e)):
+                if not "nextcord.ext.commands.errors" in str(type(e)):
                     await self.bot.cogs['ErrorsCog'].on_cmd_error(ctx, e)
                     return []
                 else:
@@ -155,7 +155,7 @@ If the bot can't send the new command format, it will try to send the old one. E
         pages.append(form.format(cog_name,description,page))
         return pages
     
-    async def cmd_help(self,ctx,cmd):
+    async def cmd_help(self, ctx: commands.Context,cmd):
         """Create pages for a command explanation"""
         desc = cmd.description if cmd.description not in [None,''] else await self.bot._(ctx, 'help.no_desc_cmd')
         if desc=='':
@@ -176,7 +176,7 @@ If the bot can't send the new command format, it will try to send the old one. E
         return ["**{}{}\n\n{}\n*Cog: {}*{}".format(prefix,syntax,desc,cmd.cog_name,subcmds)]
 
 
-    async def _default_help_command(self,ctx, commands=()):
+    async def _default_help_command(self, ctx: commands.Context, commands=()):
         bot = ctx.bot
         if self.send_in_dm:
             destination = ctx.message.author

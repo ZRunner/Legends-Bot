@@ -1,7 +1,13 @@
+# Python executables
+*.pyc
+__pycache__
+
+# VScode properties
+.vscode/
+
 *.log
-*/__pycache__/*
 .DS_Store
 test.py
-.vscode/*
-imgs/*
+imgs/
 secrets.txt
+env/

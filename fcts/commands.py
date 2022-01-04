@@ -1,21 +1,21 @@
-import discord
+import nextcord
 import sys
 import psutil
 import os
 import requests
 import asyncio
-from discord.ext import commands
+from nextcord.ext import commands
 
 
 class Commands(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.embed_color = discord.Colour(16295964)
+        self.embed_color = nextcord.Colour(16295964)
         self.file = 'commands'
 
     @commands.command(name="classes", aliases=["classe"])
-    async def cl(self, ctx, *, nom='None'):
+    async def cl(self, ctx: commands.Context, *, nom='None'):
         """Voir les détails de chaque classe"""
         ClassesCog = self.bot.cogs['ClassesCog']
         await ClassesCog.get_data()
@@ -41,14 +41,14 @@ class Commands(commands.Cog):
         await ctx.send(embed=emb.discord_embed())
 
     @commands.command(name="ping")
-    async def ping(self, ctx):
+    async def ping(self, ctx: commands.Context):
         """Voir la latence du bot"""
         m = await ctx.send("Pong !")
         t = (m.created_at - ctx.message.created_at).total_seconds()
         await m.edit(content="Pong ! ("+str(round(t*1000, 3))+"ms)")
 
     @commands.command(name="stats")
-    async def stats(self, ctx):
+    async def stats(self, ctx: commands.Context):
         """Voir quelques statistiques du bot"""
         v = sys.version_info
         version = str(v.major)+"."+str(v.minor)+"."+str(v.micro)
@@ -56,14 +56,14 @@ class Commands(commands.Cog):
         py = psutil.Process(pid)
         cl = ctx.bot.cogs['UtilitiesCog'].codelines
         r = requests.get('https://discordapp.com/api/v6')
-        d = (await self.bot._(ctx, "stats.general")).format(len(self.bot.guilds), len(self.bot.users), len([x for x in ctx.bot.users if x.bot]), cl, version, discord.__version__, round(py.memory_info()[0]/2.**30, 3), psutil.cpu_percent(), round(r.elapsed.total_seconds()*1000, 3))
+        d = (await self.bot._(ctx, "stats.general")).format(len(self.bot.guilds), len(self.bot.users), len([x for x in ctx.bot.users if x.bot]), cl, version, nextcord.__version__, round(py.memory_info()[0]/2.**30, 3), psutil.cpu_percent(), round(r.elapsed.total_seconds()*1000, 3))
         t = "**" + await self.bot._(ctx, 'stats.title') + '**'
         emb = self.bot.cogs["EmbedCog"].Embed(title=t, desc=d, color=self.embed_color, fields=[
         ]).update_timestamp().create_footer(ctx.author)
         await ctx.send(embed=emb.discord_embed())
 
     @commands.command(name="deck")
-    async def deck(self, ctx, *, user=None):
+    async def deck(self, ctx: commands.Context, *, user=None):
         """Afficher les personnages possédés par utilisateur"""
         if user == None:
             user = ctx.author
@@ -91,7 +91,7 @@ class Commands(commands.Cog):
         await ctx.send(embed=emb.discord_embed())
 
     @commands.command(name="perso", aliases=['persos', 'personnages'])
-    async def perso_display(self, ctx, *, name=None):
+    async def perso_display(self, ctx: commands.Context, *, name=None):
         """Obtenir les détails de chaque personnage"""
         PCog = self.bot.cogs['PersosCog']
         await PCog.get_data()
@@ -138,13 +138,13 @@ class Commands(commands.Cog):
         await ctx.send(embed=emb.discord_embed())
 
     @commands.command(name="combat")
-    async def combat(self, ctx, tours: int = None):
+    async def combat(self, ctx: commands.Context, tours: int = None):
         """Lance un combat"""
         asyncio.run_coroutine_threadsafe(self.bot.cogs['CombatCog'].begin(
             ctx, tours), asyncio.get_running_loop())
 
     @commands.command(name="start")
-    async def init_user(self, ctx):
+    async def init_user(self, ctx: commands.Context):
         """Commencer la partie, avec 5 personnages aléatoires"""
         deck = await ctx.bot.cogs['UsersCog'].get_user_deck(ctx.author.id)
         if len(deck) > 0:

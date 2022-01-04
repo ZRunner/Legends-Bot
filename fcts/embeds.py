@@ -1,7 +1,7 @@
 import datetime
-import discord
+import nextcord
 import requests
-from discord.ext import commands
+from nextcord.ext import commands
 
 base_url = "https://discordapp.com/api/webhooks/513473320268726322/"
 
@@ -22,7 +22,7 @@ class EmbedCog(commands.Cog):
         self.file = "embeds"
 
     class Embed:
-        def __init__(self, content="", title="", desc="", url="", color=0, time=discord.Embed.Empty, footer_url="", footer_text="", thumbnail="", image="", author_name="", author_url="", author_icon="", fields=[]):
+        def __init__(self, content="", title="", desc="", url="", color=0, time=nextcord.Embed.Empty, footer_url="", footer_text="", thumbnail="", image="", author_name="", author_url="", author_icon="", fields=[]):
             self.content = content
             self.title = title
             self.description = desc
@@ -47,7 +47,7 @@ class EmbedCog(commands.Cog):
                     x["value"] = "No value"
 
         def update_timestamp(self):
-            self.timestamp = datetime.datetime.utcnow()
+            self.timestamp = datetime.datetime.now(datetime.timezone.utc)
             return self
 
         def json(self):
@@ -61,7 +61,7 @@ class EmbedCog(commands.Cog):
                 emb["url"] = self.url
             if self.color != 0:
                 emb["color"] = self.color
-            if self.timestamp != discord.Embed.Empty:
+            if self.timestamp != nextcord.Embed.Empty:
                 emb["timestamp"] = str(self.timestamp)
             if self.footer_text != "" and self.footer_url != "":
                 emb["footer"] = {"icon_url": self.footer_url,
@@ -90,18 +90,18 @@ class EmbedCog(commands.Cog):
         def to_dict(self):
             return self.json()['embed']
 
-        def set_author(self, user):
+        def set_author(self, user: nextcord.User):
             self.author_name = user.name
-            self.author_icon = user.avatar_url_as(format='png')
+            self.author_icon = user.display_avatar.with_format('png').url
             return self
 
-        def create_footer(self, user):
+        def create_footer(self, user: nextcord.User):
             self.footer_text = "Requested by "+user.name
-            self.footer_url = user.avatar_url_as(format='png')
+            self.footer_url = user.display_avatar.with_format('png').url
             return self
 
         def discord_embed(self):
-            emb = discord.Embed(title=self.title, colour=discord.Color(
+            emb = nextcord.Embed(title=self.title, colour=nextcord.Color(
                 self.color), url=self.url, description=self.description, timestamp=self.timestamp)
             emb.set_image(url=self.image)
             emb.set_thumbnail(url=self.thumbnail)

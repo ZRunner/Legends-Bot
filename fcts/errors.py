@@ -1,5 +1,5 @@
-import discord, sys, traceback, re, random
-from discord.ext import commands
+import nextcord, sys, traceback, re, random
+from nextcord.ext import commands
 
 class ErrorsCog(commands.Cog):
 
@@ -7,13 +7,13 @@ class ErrorsCog(commands.Cog):
         self.bot = bot
         self.file = "errors"
 
-    async def on_cmd_error(self,ctx,error):
+    async def on_cmd_error(self, ctx: commands.Context,error):
         """The event triggered when an error is raised while invoking a command."""
         # This prevents any commands with local handlers being handled here in on_command_error.
         if hasattr(ctx.command, 'on_error'):
             return
         
-        ignored = (commands.CommandNotFound,commands.ConversionError,commands.BotMissingPermissions,discord.errors.Forbidden)
+        ignored = (commands.CommandNotFound,commands.ConversionError,commands.BotMissingPermissions,nextcord.errors.Forbidden)
         
         # Allows us to check for original exceptions raised and sent to CommandInvokeError.
         # If nothing is found. We keep the exception passed to on_command_error.
@@ -23,8 +23,8 @@ class ErrorsCog(commands.Cog):
         if isinstance(error, ignored):
             return
         elif isinstance(error, commands.CheckFailure):
-            if hasattr(error, 'missing_perms'):
-                perms = " & ".join([await self.bot._(ctx, 'perms.'+x) for x in error.missing_perms])
+            if hasattr(error, 'missing_permissions'):
+                perms = " & ".join([await self.bot._(ctx, 'perms.'+x) for x in error.missing_permissions])
                 await ctx.send(await self.bot._(ctx, 'error.missing_perms', perms=perms))
             return
         elif isinstance(error,commands.CommandOnCooldown):
@@ -71,7 +71,7 @@ class ErrorsCog(commands.Cog):
         await self.on_error(error,ctx)
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx: commands.Context, error):
         await self.on_cmd_error(ctx,error)
 
     @commands.Cog.listener()

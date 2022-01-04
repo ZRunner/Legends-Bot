@@ -90,5 +90,5 @@ en:
     persons: "Those characters are %{people}.\nYou can enter `%{p}deck` to see the list of your characters, and `%{p}help` for the list of available commands. Good luck!"
     welcome: "Welcome %{user} onto the adventure!\nTo get you started with good basics, we gave you 5 randoms characters."
   stats:
-    general: "**Number of servers:** {}\n**Number of visible members:** {} ({} bots)\n**Number of code lines:** {}\n**Python version:** {}\n**Version of the `discord.py` lib:** {}\n**RAM usage:** {} GB\n**CPU usage:** {} %\n**API latency time:** {} ms"
+    general: "**Number of servers:** {}\n**Number of visible members:** {} ({} bots)\n**Number of code lines:** {}\n**Python version:** {}\n**Version of the `nextcord.py` lib:** {}\n**RAM usage:** {} GB\n**CPU usage:** {} %\n**API latency time:** {} ms"
     title: "Bot statistics"        

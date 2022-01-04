@@ -1,4 +1,4 @@
-from discord.ext import commands
+from nextcord.ext import commands
 from math import log
 from inspect import signature
 from fcts.classes import Perso, Effect

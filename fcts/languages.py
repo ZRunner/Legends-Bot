@@ -1,12 +1,6 @@
 import i18n
-import discord
-from discord.ext import commands
-
-
-i18n.translations.container.clear() # invalidate old cache
-i18n.set('filename_format', '{locale}.{format}')
-i18n.set('fallback', 'en')
-i18n.load_path.append('./lang')
+import nextcord
+from nextcord.ext import commands
 
 class LangCog(commands.Cog):
 
@@ -15,17 +9,22 @@ class LangCog(commands.Cog):
         self.file="languages"
         self.languages = ['fr', 'en']
         self.cache = dict()
+        i18n.translations.container.clear() # invalidate old cache
+        i18n.load_path.clear()
+        i18n.set('filename_format', '{locale}.{format}')
+        i18n.set('fallback', 'en')
+        i18n.load_path.append('./lang')
 
 
-    async def tr(self, ctx, key, **kwargs):
+    async def tr(self, ctx, key: str, **kwargs):
         """Translate something"""
         lang = self.languages[0]
         if isinstance(ctx, commands.Context):
             if ctx.guild:
                 lang = self.languages[await self.get_lang(ctx.guild.id)]
-        elif isinstance(ctx, discord.Guild):
+        elif isinstance(ctx, nextcord.Guild):
             lang = self.languages[await self.get_lang(ctx.id)]
-        elif isinstance(ctx, discord.abc.GuildChannel):
+        elif isinstance(ctx, nextcord.abc.GuildChannel):
             lang = self.languages[await self.get_lang(ctx.guild.id)]
         elif isinstance(ctx, str) and ctx in self.languages:
             lang = ctx
@@ -57,7 +56,7 @@ class LangCog(commands.Cog):
     @commands.command(name="language")
     @commands.guild_only()
     @commands.has_guild_permissions(manage_guild=True)
-    async def change_lang(self, ctx):
+    async def change_lang(self, ctx: commands.Context):
         """Change the server language"""
         current = await self.get_lang(ctx.guild.id)
         self.cache[ctx.guild.id] = (current + 1) % len(self.languages)

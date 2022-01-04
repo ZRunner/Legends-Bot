@@ -1,10 +1,6 @@
-import discord
-import sys
-import traceback
-import importlib
-import datetime
+import nextcord
 import mysql.connector
-from discord.ext import commands
+from nextcord.ext import commands
 from math import floor
 
 
@@ -38,18 +34,6 @@ class UtilitiesCog(commands.Cog):
             return None
         return self.bot.get_emoji(self.emojis[name])
 
-    async def anti_code(self, text):
-        if type(text) == str:
-            for i, j in [('é', 'e'), ('è', 'e'), ('à', 'a'), ('î', 'i'), ('ê', 'e'), ('ï', 'i'), ('ü', 'u'), ('É', 'e'), ('ë', 'e'), ('–', '-'), ('“', '"'), ('’', "'"), ('û', 'u'), ('°', '°'), ('Ç', 'C'), ('ç', 'c')]:
-                text = text.replace(i, j)
-            return text
-        elif type(text) == list:
-            text2 = []
-            for i, j in [('é', 'e'), ('è', 'e'), ('à', 'a'), ('î', 'i'), ('ê', 'e'), ('ï', 'i'), ('ü', 'u'), ('É', 'e'), ('ë', 'e'), ('–', '-'), ('“', '"'), ('’', "'"), ('û', 'u'), ('°', '°'), ('Ç', 'C'), ('ç', 'c')]:
-                for k in text:
-                    text2.append(k.replace(i, j))
-                    return text2
-
     async def suppr(self, msg):
         try:
             await msg.delete()
@@ -70,13 +54,6 @@ class UtilitiesCog(commands.Cog):
         cnx.close()
         return liste
 
-    async def global_check(self, ctx):
-        if self.config == None:
-            self.config = self.get_bot_infos()
-        if len(self.config) == 0:
-            return True
-        return (ctx.guild == None) or (not str(ctx.guild.id) in self.config[0]['banned_guilds'].split(";"))
-
     def getIfromRGB(self, rgb):
         red = rgb[0]
         green = rgb[1]
@@ -86,7 +63,7 @@ class UtilitiesCog(commands.Cog):
 
     async def add_check_reaction(self, message):
         try:
-            emoji = discord.utils.get(self.bot.emojis, name='greencheck')
+            emoji = nextcord.utils.get(self.bot.emojis, name='greencheck')
             if emoji:
                 await message.add_reaction(emoji)
             else:

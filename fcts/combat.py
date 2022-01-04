@@ -1,6 +1,6 @@
 from typing import Tuple
-from discord.ext import commands
-import discord
+from nextcord.ext import commands
+import nextcord
 import asyncio
 import random
 from fcts.classes import Team, Perso
@@ -18,7 +18,7 @@ class CombatCog(commands.Cog):
     def cog_unload(self):
         self.in_combat = list()
     
-    async def select_team(self, user:discord.Member, channel:discord.TextChannel, deck:dict):
+    async def select_team(self, user:nextcord.Member, channel:nextcord.TextChannel, deck:dict):
         """Demande à un utilisateur de choisir 5 personnages"""
         try:
             suppr = self.bot.cogs['UtilitiesCog'].suppr
@@ -211,7 +211,7 @@ class CombatCog(commands.Cog):
                 return Team2.rounds > tours
             return any([x.life[0] > 0 for x in Team1.players]) and any([x.life[0] > 0 for x in Team2.players])
         
-        async def send_embed(msg:discord.Message, emb, sentence:str, need_update:bool):
+        async def send_embed(msg:nextcord.Message, emb, sentence:str, need_update:bool):
             if need_update or msg is None or not can_del_reactions:
                 if msg:
                     await msg.delete()
@@ -320,7 +320,7 @@ class CombatCog(commands.Cog):
             text += "{}**|** {} {}".format(emojis['none'], emojis['effect'], ' '.join(other_effects))
         return text
 
-    async def update_status(self, ctx, emb, Team1, Team2):
+    async def update_status(self, ctx: commands.Context, emb, Team1, Team2):
         """Met à jour l'état des personnages"""
         get_emoji = self.bot.cogs['UtilitiesCog'].get_emoji
         life_emoji = str(await get_emoji('legends_heart'))
