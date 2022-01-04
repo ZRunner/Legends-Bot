@@ -53,7 +53,7 @@ fr:
     new_lang: Le bot est passé en français !
   error:
     command_disabled: "La commande %{cmd} est désactivée"
-    command_in_dm: "La commande %{cmd} n'est pas autorisée en Messages Privés"
+    command_in_dm: Cette commande n'est pas disponible en Messages Privés
     convert: "Oups, impossible de convertir le paramètre `%{arg}` en type \"%{type}\" :confused:"
     cooldown: Cette commande est en cooldown, vous devez attendre encore %{count} secondes !
     invalid: "`%{arg}` n'est pas une option valide pour %{opt}"
@@ -84,11 +84,12 @@ fr:
     level: niveau
     listtitle: Liste des personnages
     nopeople1: Vous ne possédez aucun personnage !
-    nopeople2: Le joueur %{user} ne possède aucun personnage !
+    nopeople2: Ce joueur ne possède aucun personnage !
+    nobot: Les bots ne peuvent pas participer au jeu !
     notfound: Impossible de trouver le joueur %{user} !
   start:
     already: Vous avez déjà des personnages !
-    persons: "Ces personnages sont %{people}.\nVous pouvez entrer `%{p}deck` pour voir la liste de vos personnages, et `%{p}help` pour la liste des commandes disponibles. Bonne chance !"
+    persons: "Ces personnages sont %{people}.\nVous pouvez utiliser `/deck` pour voir la liste de vos personnages et `/characters` pour des détails sur les personnages. Bonne chance !"
     welcome: "Bienvenue %{user} dans l'aventure !\nPour que vous commenciez avec de bonnes bases, nous vous avons donné au hasard 5 personnages."
   stats:
     general: "**Nombre de serveurs :** {}\n**Nombre de membres visibles :** {} ({} bots)\n**Nombre de lignes de code :** {}\n**Version de Python :** {}\n**Version de la bibliothèque `nextcord.py` :** {}\n**Charge sur la mémoire vive :** {} GB\n**Charge sur le CPU :** {} %\n**Temps de latence de l'api :** {} ms"

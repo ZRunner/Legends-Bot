@@ -19,9 +19,10 @@ class LangCog(commands.Cog):
     async def tr(self, ctx, key: str, **kwargs):
         """Translate something"""
         lang = self.languages[0]
-        if isinstance(ctx, commands.Context):
-            if ctx.guild:
-                lang = self.languages[await self.get_lang(ctx.guild.id)]
+        if isinstance(ctx, commands.Context) and ctx.guild:
+            lang = self.languages[await self.get_lang(ctx.guild.id)]
+        elif isinstance(ctx, nextcord.Interaction) and ctx.guild_id:
+            lang = self.languages[await self.get_lang(ctx.guild_id)]
         elif isinstance(ctx, nextcord.Guild):
             lang = self.languages[await self.get_lang(ctx.id)]
         elif isinstance(ctx, nextcord.abc.GuildChannel):
@@ -53,15 +54,19 @@ class LangCog(commands.Cog):
                 self.cache[guildID] = liste[0][0]
         return self.cache[guildID]
 
-    @commands.command(name="language")
-    @commands.guild_only()
-    @commands.has_guild_permissions(manage_guild=True)
-    async def change_lang(self, ctx: commands.Context):
+    @nextcord.slash_command(name="language", description="Toggle the bot language in your server")
+    async def change_lang(self, inter: nextcord.Interaction):
         """Change the server language"""
-        current = await self.get_lang(ctx.guild.id)
-        self.cache[ctx.guild.id] = (current + 1) % len(self.languages)
-        await self.db_edit_lang(ctx.guild.id, self.cache[ctx.guild.id])
-        await ctx.send(await self.bot._(ctx, 'config.new_lang'))
+        if not inter.guild:
+            await inter.send(await self.bot._(inter, 'error.command_in_dm'))
+            return
+        if not inter.user.guild_permissions.manage_guild:
+            await inter.send(await self.bot._(inter, 'error.missing_perms', perms=await self.bot._(inter, 'perms.manage_guild')))
+            return
+        current = await self.get_lang(inter.guild_id)
+        self.cache[inter.guild_id] = (current + 1) % len(self.languages)
+        await self.db_edit_lang(inter.guild_id, self.cache[inter.guild_id])
+        await inter.send(await self.bot._(inter, 'config.new_lang'))
 
 
 def setup(bot):

@@ -78,8 +78,8 @@ class LegendsBot(commands.AutoShardedBot):
         return get_prefix(self,msg)
 
 
-def get_prefix(bot,msg):
-    return '/'
+def get_prefix(bot, msg):
+    return '&'
 
 
 def setup_logger():

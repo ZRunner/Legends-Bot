@@ -53,7 +53,7 @@ en:
     new_lang: The bot is now in English!
   error:
     command_disabled: "The command %{cmd} is disabled"
-    command_in_dm: "The command %{cmd} is not allowed in Private Messages"
+    command_in_dm: This is not available in Private Messages
     convert: "Oops, unable to convert `%{arg}` into type \"%{type}\" :confused:"
     invalid: "`%{arg}` is not a valid option for %{opt}"
     member_not_found: "Unable to find the member %{member} :confused:"
@@ -83,11 +83,12 @@ en:
     level: level
     listtitle: Character list
     nopeople1: You don't own any characters!
-    nopeople2: The player %{user} don't own any character!
+    nopeople2: This player doesn't own any character!
+    nobot: Bots can't participate in this game!
     notfound: Unable to find the player %{user}!
   start:
     already: You already have characters!
-    persons: "Those characters are %{people}.\nYou can enter `%{p}deck` to see the list of your characters, and `%{p}help` for the list of available commands. Good luck!"
+    persons: "Those characters are %{people}.\nYou can enter `/deck` to see the list of your characters, and `/characters` for details about the characters. Good luck!"
     welcome: "Welcome %{user} onto the adventure!\nTo get you started with good basics, we gave you 5 randoms characters."
   stats:
     general: "**Number of servers:** {}\n**Number of visible members:** {} ({} bots)\n**Number of code lines:** {}\n**Python version:** {}\n**Version of the `nextcord.py` lib:** {}\n**RAM usage:** {} GB\n**CPU usage:** {} %\n**API latency time:** {} ms"
