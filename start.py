@@ -40,7 +40,6 @@ initial_extensions = ['fcts.admin',
                     'fcts.utilities',
                     'fcts.aide',
                     'fcts.embeds',
-                    'fcts.combat',
                     'fcts.attacks',
                     'fcts.effects'
   ]

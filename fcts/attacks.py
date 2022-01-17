@@ -2,10 +2,12 @@ import random
 from nextcord.ext import commands
 from math import log
 
+from utils import LegendsBot
+
 
 class AttacksCog(commands.Cog):
 
-    def __init__(self,bot):
+    def __init__(self, bot: LegendsBot):
         self.bot = bot
         self.file = 'attacks'
         self.critical = ["C'est un coup critique !","Coup critique !","Wow, quel coup critique !","Il s'agit d'un coup critique !","Coup critique !"]
@@ -82,15 +84,15 @@ class AttacksCog(commands.Cog):
     
     async def apply_dmg(self, perso, points:int, attacker, critic:bool=True) -> float:
         if attacker.passifType != 'B':
-            await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
+            await self.bot.fight_module.apply_one_passif(attacker)
         if perso.passifType != 'G':
-            await self.bot.cogs['CombatCog'].apply_one_passif(perso)
+            await self.bot.fight_module.apply_one_passif(perso)
         if random.randrange(100) < perso.dodge and not perso.frozen:
             return 0
         attack_boost = attacker.attack_bonus(perso.type)
         # print(perso.name, attack_boost)
         if attacker.passifType == 'B':
-            await self.bot.cogs['CombatCog'].apply_one_passif(attacker)
+            await self.bot.fight_module.apply_one_passif(attacker)
         points += round(points * attack_boost,1)
         if critic and random.random() < await self.calc_critic(perso.lvl):
             points += round(random.randint(20,30)/100*points,1)
@@ -100,7 +102,7 @@ class AttacksCog(commands.Cog):
             damage = await self.attack_with_shield(attacker,5*log(perso.lvl) + perso.lvl/5)
             attacker.life[0] = max(0, attacker.life[0]-damage)
         if perso.passifType != 'H':
-            await self.bot.cogs['CombatCog'].apply_one_passif(perso)
+            await self.bot.fight_module.apply_one_passif(perso)
         await perso.effects.execute(perso, 'after_defense')
         return round(points, None if int(points) == points else 1)
     
