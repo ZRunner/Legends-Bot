@@ -9,6 +9,12 @@ en:
     dodge:
       '0': Nice dodge!
       '1': It's a dodge!
+  buttons:
+    join:
+      label: Accept the fight
+    cancel:
+      label: Cancel
+      answer: Your challenge has been cancelled!
   classes:
     details: "Class details %{classe}"
     dodge: Chances to dodge
@@ -24,15 +30,17 @@ en:
     name: Name
   combat:
     choice:
-      select: "%{user}, please choose your characters. To do so, simply enter their numbers, separated by gaps.. Here is the list of your characters :\n %{people}"
-      too-late: You took too long to choose. Abandoning the fight
+      placeholder: Select 5 characters
+      select: "%{user}, please choose your characters by selecting them in your list"
+      too-late: You took too long to choose. Fight cancelled
       too-many-tries: "You failed too many times :confused:"
       invalid: Invalid answer. Please try again
       missing-count: You must select 5 characters
     preparation:
-      already-in: "%{user}, you already have a fight in progress!"
-      too-few: "%{user}, you don't have enough characters to play!"
-      preparing: "A fight is brewing! Click on the reaction ✅ to challenge %{user} !"
+      already-in: You already have a fight in progress!
+      invalid-tours: "The number of game rounds cannot be less than %{min}!"
+      too-few: You don't have enough characters to play!
+      preparing: "A fight is brewing! Click on the green button to challenge %{user} !"
       too-late: "%{user}, you did not manage to find an opponent in time :hourglass:"
       user-joined: "%{user} joins the fight ! Good luck to both of you !"
     attacks:

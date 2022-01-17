@@ -9,8 +9,6 @@ from nextcord.ext import commands
 from utils import LegendsBot
 
 
-SLASH_GUILDS = [513348985528778754]
-
 class Commands(commands.Cog):
 
     def __init__(self, bot: LegendsBot):
@@ -65,18 +63,18 @@ class Commands(commands.Cog):
         emb = nextcord.Embed(title=t, description=d, color=self.embed_color)
         await inter.send(embed=emb)
 
-    @nextcord.slash_command(name="deck", description="Show the characters owned by a player", guild_ids=SLASH_GUILDS)
+    @nextcord.slash_command(name="deck", description="Show the characters owned by a player")
     async def deck(self, inter: nextcord.Interaction, user: nextcord.User=nextcord.SlashOption(
                 name="player",
                 description="The player to target. Don't fill to see your own deck",
                 required=False  
     )):
         """Display characters owned by a player"""
+        if user is None:
+            user = inter.user
         if user.bot:
             await inter.send(await self.bot._(inter, "player.nobot"))
             return
-        if user is None:
-            user = inter.user
         deck: dict = await self.bot.cogs['UsersCog'].get_user_deck(user.id)
         if not deck:
             if user == inter.user:
@@ -93,7 +91,7 @@ class Commands(commands.Cog):
         emb = nextcord.Embed(title=t, description="\n".join(text), color=self.embed_color)
         await inter.send(embed=emb)
 
-    @nextcord.slash_command(name="characters", description="Describe each character", guild_ids=SLASH_GUILDS)
+    @nextcord.slash_command(name="characters", description="Describe each character")
     async def perso_display(self, inter: nextcord.Interaction, name: str=nextcord.SlashOption(
                 name="character",
                 description="The character name to look for. Don't fill to see the whole list",
@@ -151,13 +149,14 @@ class Commands(commands.Cog):
         text = text.lower()
         await inter.response.send_autocomplete([value for value in data if text in value.lower()][:25])
 
-    @commands.command(name="combat")
-    async def combat(self, ctx: commands.Context, tours: int = None):
+    @nextcord.slash_command(name="fight", description="Start a fight with another player")
+    async def combat(self, inter: nextcord.Interaction, tours: int = None):
         """Lance un combat"""
-        asyncio.run_coroutine_threadsafe(self.bot.cogs['CombatCog'].begin(
-            ctx, tours), asyncio.get_running_loop())
+        # asyncio.run_coroutine_threadsafe(self.bot.fight_module.begin(
+        #     inter, tours), asyncio.get_running_loop())
+        await self.bot.fight_module.begin(inter, tours)
 
-    @nextcord.slash_command(name="start", description="Start the game, with 5 random characters", guild_ids=SLASH_GUILDS)
+    @nextcord.slash_command(name="start", description="Start the game, with 5 random characters")
     async def init_user(self, inter: nextcord.Interaction):
         """Commencer la partie, avec 5 personnages aléatoires"""
         deck = await self.bot.cogs['UsersCog'].get_user_deck(inter.user.id)

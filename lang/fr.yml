@@ -9,6 +9,12 @@ fr:
     dodge:
       '0': Belle esquive !
       '1': C'est une esquive !
+  buttons:
+    join:
+      label: Accepter le combat
+    cancel:
+      label: Annuler
+      answer: Votre défi a bien été annulé
   classes:
     details: "Détails de la classe %{classe}"
     dodge: Chances d'esquiver
@@ -24,15 +30,17 @@ fr:
     name: Nom
   combat:
     choice:
-      select: "%{user}, veuillez choisir vos personnages. Pour cela, entrez simplement leurs numéros, séparés par des espaces. Voici la liste de vos personnages :\n %{people}"
+      placeholder: Choisissez 5 personnages
+      select: "%{user}, veuillez choisir vos personnages en les sélectionnant dans votre liste :"
       too-late: Vous avez été trop long à choisir. Abandon du combat
       too-many-tries: "Vous avez échoué trop de fois :confused:"
       invalid: Réponse invalide. Veuillez recommencer
       missing-count: Vous devez sélectionner 5 personnages
     preparation:
-      already-in: "%{user}, vous avez déjà un combat en cours !"
-      too-few: "%{user}, vous ne possédez pas assez de personnages pour jouer !"
-      preparing: "Un combat se prépare ! Cliquez sur la réaction ✅ pour affronter %{user} !"
+      already-in: "Vous avez déjà un combat en cours !"
+      invalid-tours: "Le nombre de tours de la partie ne peut pas être en-dessous de %{min} !"
+      too-few: "Vous ne possédez pas assez de personnages pour jouer !"
+      preparing: "Un combat se prépare ! Cliquez sur le bouton vert pour affronter %{user} !"
       too-late: "%{user}, vous n'avez pas réussi à trouver un adversaire dans les temps :hourglass:"
       user-joined: "%{user} a rejoint le combat ! Bonne chance à vous deux !"
     attacks:

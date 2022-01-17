@@ -1,117 +1,85 @@
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 from nextcord.ext import commands
 import nextcord
 import asyncio
 import random
 from fcts.classes import Team, Perso
+from libs.views import ChooseCharacters, ChooseOpponent
+
+if TYPE_CHECKING:
+    from utils import LegendsBot
 
 
-class CombatCog(commands.Cog):
-    def __init__(self,bot):
+class FightModule:
+    def __init__(self, bot: "LegendsBot"):
         self.bot = bot
         self.in_combat = list()
-        self.file = "combat"
-        self.costs = {'attaque2':3, 'ultime':6}
-        self.timeouts = {'choix-persos':60.0}
+        self.costs = {'attaque2': 3, 'ultime': 6}
     
 
-    def cog_unload(self):
-        self.in_combat = list()
-    
-    async def select_team(self, user:nextcord.Member, channel:nextcord.TextChannel, deck:dict):
-        """Demande à un utilisateur de choisir 5 personnages"""
-        try:
-            suppr = self.bot.cogs['UtilitiesCog'].suppr
-            deck = [x for x in deck.values()]
-            names = [x['personnage'] for x in deck]
-            txt = await self.bot._(channel, 'combat.choice.select', user=user.mention, people="\n".join(["{}) {}".format(e+1,v) for e,v in enumerate(names)]))
-            bot_msg = await channel.send(txt)
-            def check(msg):
-                msg.author == user and msg.channel == channel
-                return msg.author == user and msg.channel == channel
-            tries = 0
-            choice = list()
-            msg = None
-            while len(choice) != 5:
-                try:
-                    choice_digits = list()
-                    msg = await self.bot.wait_for('message', timeout=self.timeouts['choix-persos'], check=check)
-                except asyncio.TimeoutError:
-                    await channel.send(await self.bot._(channel, 'combat.choice.too-late'))
-                    await suppr(bot_msg)
-                    return []
-                try:
-                    choice = []
-                    for item in msg.content.split(' '):
-                        item = item.strip()
-                        if int(item)>0 and item not in choice_digits:
-                            choice_digits.append(item)
-                            choice.append(deck[int(item)-1])
-                except:
-                    if tries==3:
-                        await channel.send(await self.bot._(channel, 'combat.choice.too-many-tries'))
-                        await suppr(bot_msg)
-                        return []
-                    await channel.send(await self.bot._(channel, 'combat.choice.invalid'))
-                    tries += 1
-                else:
-                    if len(choice) != 5:
-                        await channel.send(await self.bot._(channel, 'combat.choice.missing-count'))
-                        tries +=1
-            await suppr(bot_msg)
-            if msg:
-                await suppr(msg)
-            return choice
-        except Exception as e:
-            await self.bot.cogs["ErrorsCog"].on_error(e,None)
-        
-
-    async def begin(self, ctx:commands.Context, tours:int):
+    async def begin(self, inter: nextcord.Interaction, tours:int):
         """Attend un début de partie"""
-        if ctx.author in self.in_combat:
-            return await ctx.send(await self.bot._(ctx, 'combat.preparation.already-in', user=ctx.author.mention))
-        play1_deck = await ctx.bot.cogs['UsersCog'].get_user_deck(ctx.author.id)
+        if tours < 2:
+            return await inter.send(await self.bot._(inter, 'combat.preparation.invalid-tours', user=inter.user.mention, min=2), ephemeral=True)
+        if inter.user in self.in_combat:
+            return await inter.send(await self.bot._(inter, 'combat.preparation.already-in', user=inter.user.mention), ephemeral=True)
+        play1_deck: dict[int, dict] = await self.bot.cogs['UsersCog'].get_user_deck(inter.user.id)
         if len(play1_deck) < 5:
-            return await ctx.send(await self.bot._(ctx, 'combat.preparation.too-few', user=ctx.author.mention))
-        msg = await ctx.send(await self.bot._(ctx, 'combat.preparation.preparing', user=ctx.author))
-        await msg.add_reaction('✅')
-        self.in_combat.append(ctx.author)
-        # Sélection de l'adversaire
-        def check(reaction, user):
-            return user != ctx.author and str(reaction.emoji) == '✅' and reaction.message.id==msg.id and user != ctx.guild.me and user not in self.in_combat
-        try:
-            _, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
-        except asyncio.TimeoutError:
-            self.in_combat.remove(ctx.author)
-            await ctx.send(await self.bot._(ctx, 'combat.preparation.too-late', user=ctx.author.mention))
+            return await inter.send(await self.bot._(inter, 'combat.preparation.too-few', user=inter.user.mention), ephemeral=True)
+        
+        self.in_combat.append(inter.user)
+        join_view = ChooseOpponent(self.bot, inter)
+        await join_view.init()
+        msg_ = await self.bot._(inter, 'combat.preparation.preparing', user=inter.user.mention)
+        await inter.send(msg_, view=join_view)
+        timeouted = await join_view.wait()
+        if timeouted:
+            # no one answered
+            self.in_combat.remove(inter.user)
+            await inter.send(await self.bot._(inter, 'combat.preparation.too-late', user=inter.user.mention), ephemeral=True)
+            await join_view.disable(inter)
             return
-        await msg.clear_reactions()
-        play2_deck = await ctx.bot.cogs['UsersCog'].get_user_deck(user.id)
-        if len(play2_deck) < 5:
-            self.in_combat.remove(ctx.author)
-            return await ctx.send(await self.bot._(ctx, 'combat.preparation.too-few', user=user.mention))
-        self.in_combat.append(user)
-        await ctx.send(await self.bot._(ctx, 'combat.preparation.user-joined', user=user.mention))
+        if not join_view.player:
+            # fight got cancelled
+            self.in_combat.remove(inter.user)
+            return
+        await join_view.disable(inter)
+        
+        player1: nextcord.User = inter.user
+        player2: nextcord.User = join_view.player
+        self.in_combat.append(player2)
+        play2_deck: dict[int, dict] = await self.bot.cogs['UsersCog'].get_user_deck(player2.id)
+
+        await inter.send(await self.bot._(inter, 'combat.preparation.user-joined', user=player2.mention))
         # Sélection des personnages
         try:
             play1_players = []
             play2_players = []
-            if len(play1_deck)==5:
+            if len(play1_deck) == 5:
                 play1_players = [x for x in play1_deck.values()]
             else:
-                play1_players = await self.select_team(ctx.author,ctx.channel,play1_deck)
-                if len(play1_players) == 0:
-                    self.in_combat.remove(ctx.author)
-                    self.in_combat.remove(user)
+                play1_select = ChooseCharacters(self.bot, inter, player1.id)
+                await play1_select.init()
+                await inter.send(await self.bot._(inter, "combat.choice.select", user=player1.mention), view=play1_select)
+                await play1_select.wait()
+                if len(play1_select.team) == 0:
+                    self.in_combat.remove(player1)
+                    self.in_combat.remove(player2)
                     return
-            if len(play2_deck)==5:
+                play1_players = play1_select.team
+            if len(play2_deck) == 5:
                 play2_players = [x for x in play2_deck.values()]
             else:
-                play2_players = await self.select_team(user,ctx.channel,play2_deck)
-                if len(play2_players) == 0:
-                    self.in_combat.remove(ctx.author)
-                    self.in_combat.remove(user)
+                play2_select = ChooseCharacters(self.bot, inter, player2.id)
+                await play2_select.init()
+                await inter.send(await self.bot._(inter, "combat.choice.select", user=player2.mention), view=play2_select)
+                await play2_select.wait()
+                if len(play2_select.team) == 0:
+                    self.in_combat.remove(player1)
+                    self.in_combat.remove(player2)
                     return
+                play2_players = play2_select.team
+
             # Création de l'équipe 1
             l = list()
             PCog = self.bot.cogs['PersosCog'].data
@@ -123,7 +91,7 @@ class CombatCog(commands.Cog):
                 life = await self.bot.cogs['PersosCog'].calc_life(data, lvl)
                 esq = (await self.bot.cogs['ClassesCog'].get_class(data['Class']))['Escape']
                 l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=lvl,at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,dodge=esq,Type=data['Type'],passifType=data['type_passif']))
-            Team1 = Team(user=ctx.author,players=l)
+            Team1 = Team(user=inter.user,players=l)
             # Création de l'équipe 2
             l = list()
             for p in play2_players:
@@ -132,7 +100,7 @@ class CombatCog(commands.Cog):
                 life = await self.bot.cogs['PersosCog'].calc_life(data,lvl)
                 esq = (await self.bot.cogs['ClassesCog'].get_class(data['Class']))['Escape']
                 l.append(Perso(name=p['personnage'],classe=data['Class'],lvl=lvl,at1=data['Attaque 1'],at2=data['Attaque 2'],ult=data['Ultime'],pas=data['Passif'],life=life,dodge=esq,Type=data['Type'],passifType=data['type_passif']))
-            Team2 = Team(user=user,players=l)
+            Team2 = Team(user=player2,players=l)
             # Référencement des équipes l'une dans l'autre
             for p in Team1.players:
                 p.Team1 = Team1
@@ -141,13 +109,13 @@ class CombatCog(commands.Cog):
                 p.Team1 = Team2
                 p.Team2 = Team1
             # Début des tours
-            self.bot.log.debug("Début d'un combat entre {u.name} ({u.id}) et {a.name} ({a.id})".format(u=ctx.author,a=user))
-            await self.make_tours(ctx,Team1,Team2,tours)
+            self.bot.log.debug("Début d'un combat entre {u.name} ({u.id}) et {a.name} ({a.id})".format(u=inter.user,a=player2))
+            await self.make_tours(inter,Team1,Team2,tours)
 
         except Exception as e:
-            await self.bot.cogs["ErrorsCog"].on_command_error(ctx,e)
-        self.in_combat.remove(ctx.author)
-        self.in_combat.remove(user)
+            await self.bot.cogs["ErrorsCog"].on_interaction_error(inter, e)
+        self.in_combat.remove(inter.user)
+        self.in_combat.remove(player2)
 
 
 
@@ -189,19 +157,19 @@ class CombatCog(commands.Cog):
             did_something = True
         return action, result, did_something
 
-    async def make_tours(self, ctx:commands.Context, Team1:Team, Team2:Team, tours:int):
+    async def make_tours(self, inter: nextcord.Interaction, Team1:Team, Team2:Team, tours:int):
         """Fait passer un tour"""
         # Préparation de l'embed
-        title = await self.bot._(ctx, 'combat.embed.title', user1=Team1.user.display_name, user2=Team2.user.display_name)
-        desc = await self.bot._(ctx, 'combat.embed.desc')
-        f1_v= await self.bot._(ctx, 'combat.embed.history')
-        f1_k= await self.bot._(ctx, 'combat.embed.beginning')
-        loading = await self.bot._(ctx, 'combat.embed.loading')
+        title = await self.bot._(inter, 'combat.embed.title', user1=Team1.user.display_name, user2=Team2.user.display_name)
+        desc = await self.bot._(inter, 'combat.embed.desc')
+        f1_v= await self.bot._(inter, 'combat.embed.history')
+        f1_k= await self.bot._(inter, 'combat.embed.beginning')
+        loading = await self.bot._(inter, 'combat.embed.loading')
         emb = self.bot.cogs['EmbedCog'].Embed(title=title,desc=desc,color=self.bot.cogs['Commands'].embed_color,fields=[{'name':f1_v,'value':f1_k},{'name':loading,'value':'None'},{'name':'\u200b','value':'\u200b'},{'name':loading,'value':'None'},{'name':'\u200b','value':'\u200b'},{'name':loading,'value':loading}])
         msg = None
         result = str()
         need_update = True
-        can_del_reactions = ctx.channel.permissions_for(ctx.guild.me).manage_messages
+        can_del_reactions = inter.channel.permissions_for(inter.guild.me).manage_messages
         # Mélange des personnages
         random.shuffle(Team1.players)
         random.shuffle(Team2.players)
@@ -216,8 +184,8 @@ class CombatCog(commands.Cog):
                 if msg:
                     await msg.delete()
                 if sentence:
-                    await ctx.send(sentence)
-                return await ctx.send(embed=emb)
+                    await inter.send(sentence)
+                return await inter.send(embed=emb)
             else:
                 await msg.edit(embed=emb)
                 await msg.clear_reactions()
@@ -227,13 +195,13 @@ class CombatCog(commands.Cog):
             if not (Team1.user in self.in_combat or Team2.user in self.in_combat):
                 break
 
-            await self.update_status(ctx, emb, Team1, Team2)
+            await self.update_status(inter, emb, Team1, Team2)
             msg = await send_embed(msg, emb, result, need_update)
             perso = Team1.players[Team1.nbr] # sélection du personnage
             # on applique les effets sur ce perso
             await self.apply_effects(perso)
             # l'utilisateur choisit l'action, et on l'exécute
-            action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team1.user), perso)
+            action, result, need_update = await self.do_attack(inter, await self.ask_action(msg,emb,perso,Team1.user), perso)
             await perso.effects.execute(perso, 'after_action')
             if action == 'pass':
                 perso.points += 2
@@ -250,13 +218,13 @@ class CombatCog(commands.Cog):
             if not (Team1.user in self.in_combat or Team2.user in self.in_combat):
                 break
 
-            await self.update_status(ctx, emb, Team1, Team2)
+            await self.update_status(inter, emb, Team1, Team2)
             msg = await send_embed(msg, emb, result, need_update)
             perso = Team2.players[Team2.nbr] # sélection du personnage
             # on applique les effets sur ce perso
             await self.apply_effects(perso)
             # l'utilisateur choisit l'action, et on l'exécute
-            action, result, need_update = await self.do_attack(ctx, await self.ask_action(msg,emb,perso,Team2.user), perso)
+            action, result, need_update = await self.do_attack(inter, await self.ask_action(msg,emb,perso,Team2.user), perso)
             await perso.effects.execute(perso, 'after_action')
             if action == 'pass':
                 perso.points += 2
@@ -271,12 +239,12 @@ class CombatCog(commands.Cog):
             Team2.rounds += 1 # incrémentation du nombre de tours
 
         winner = Team1 if Team2.lost else Team2
-        await self.add_history(emb, await self.bot._(ctx, 'combat.embed.winner', user=winner.user))
-        await self.update_status(ctx, emb, Team1, Team2)
+        await self.add_history(emb, await self.bot._(inter, 'combat.embed.winner', user=winner.user))
+        await self.update_status(inter, emb, Team1, Team2)
         del emb.fields[-1]
         # if msg != None:
         #     await msg.delete()
-        # msg = await ctx.send(embed=emb)
+        # msg = await inter.send(embed=emb)
         await send_embed(msg, emb, result, True)
 
 
@@ -412,7 +380,3 @@ class CombatCog(commands.Cog):
         player.effects.clean()
         # if player.invisible > 0:
         #     player.invisible = max(player.invisible-1, 0)
-
-
-def setup(bot):
-    bot.add_cog(CombatCog(bot))
