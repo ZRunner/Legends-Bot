@@ -1,13 +1,27 @@
+from typing import Union
 import nextcord, sys, traceback, re, random
 from nextcord.ext import commands
 
+from utils import LegendsBot
+
 class ErrorsCog(commands.Cog):
 
-    def __init__(self,bot):
+    def __init__(self, bot: LegendsBot):
         self.bot = bot
         self.file = "errors"
+    
+    async def on_interaction_error(self, inter: nextcord.Interaction, error: Exception):
+        "The event triggered when an error is raised in an interaction process"
+        try:
+            await inter.send(await self.bot._(inter, 'error.unexpected_error'))
+        except:
+            self.bot.log.warn("[on_interaction_error] Impossible d'envoyer l'erreur", exc_info=True)
+        # All other Errors not returned come here... And we can just print the default TraceBack.
+        self.bot.log.info(f'Exception in Interaction {inter.id}:')
+        #traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+        await self.on_error(error, inter)
 
-    async def on_cmd_error(self, ctx: commands.Context,error):
+    async def on_cmd_error(self, ctx: commands.Context, error: Exception):
         """The event triggered when an error is raised while invoking a command."""
         # This prevents any commands with local handlers being handled here in on_command_error.
         if hasattr(ctx.command, 'on_error'):
@@ -71,18 +85,18 @@ class ErrorsCog(commands.Cog):
         await self.on_error(error,ctx)
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error):
+    async def on_command_error(self, ctx: commands.Context, error: Exception):
         await self.on_cmd_error(ctx,error)
 
     @commands.Cog.listener()
-    async def on_error(self,error,ctx):
+    async def on_error(self, error: Exception, ctx: Union[commands.Context, nextcord.Interaction]):
         try:
             tr = traceback.format_exception(type(error), error, error.__traceback__)
             msg = "```python\n{}\n```".format(" ".join(tr).replace('arthur', 'zrunner'))
-            if ctx == None:
+            if ctx is None:
                 await self.senf_err_msg(f"Erreur interne\n{msg}")
-            elif ctx.guild == None:
-                await self.senf_err_msg(f"DM | {ctx.channel.recipient.name}\n{msg}")
+            elif ctx.guild is None:
+                await self.senf_err_msg(f"DM | {ctx.channel.name}\n{msg}")
             else:
                 await self.senf_err_msg(ctx.guild.name+" | "+ctx.channel.name+"\n"+msg)
         except Exception as e:
